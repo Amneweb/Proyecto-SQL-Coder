@@ -18,10 +18,21 @@ Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una 
 
 ### Solución propuesta
 
-**Elaborar una app online (de la cual este proyecto consistirá sólo en la base de datos) que permita a los usuarios armar sus pedidos directamente.**
+**Elaborar una app online (de la cual este proyecto consistirá sólo en la base de datos) que permita a los clientes armar sus pedidos directamente.**
 
 - Los clientes tendrán acceso al sistema, en el que podrán elegir los productos y las cantidades (que ya tendrán el stock cargado).
 - Una vez que el cliente armó su pedido, recibe confirmación del mismo y una orden de compra con el valor total de la misma. (Eventualmente se podría traer la información de las cuentas corrientes de los clientes, para que estos sepan si tienen deudas y a cuánto ascenderá la misma sumando el nuevo pedido)
 - Los encargados de depósito tendrán acceso al sistema y podrán ver los pedidos realizados y comenzar a armarlos (tal vez se requiera autorización de un gerente de distribución antes de que los encargados de depósito puedan tener el acceso a los pedidos)
 - El sistema distribuirá los pedidos por días y zonas de entrega y armará la posible logística de entrega
-- Hay algunos clientes que no están familiarizados con la tecnología moderna, en cuyo caso segurán haciendo los pedidos por whatsapp, pero el empleado, en lugar de pasar el pedido al excel, lo pasará al sistema como si fuera el propio cliente
+- Hay algunos clientes que no están familiarizados con la tecnología moderna, en cuyo caso seguirán haciendo los pedidos por whatsapp, pero el empleado, en lugar de pasar el pedido al excel, lo pasará al sistema como si fuera el propio cliente
+
+# TABLAS
+
+El siguiente enlace lleva a un archivo de google sheets con la definición de las tablas
+https://docs.google.com/spreadsheets/d/1-eUCWY-VkGH3vUq4jT_UxRgGNy-ChXFRJeHKCe7AbH0/edit?usp=sharing
+
+# DIAGRAMA ENTIDAD RELACION
+
+La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf de la lista de archivos y carpetas de este repo.
+
+![alt text](Windward.jpg)
