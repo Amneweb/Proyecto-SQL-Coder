@@ -35,4 +35,4 @@ https://docs.google.com/spreadsheets/d/1-eUCWY-VkGH3vUq4jT_UxRgGNy-ChXFRJeHKCe7A
 
 La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf de la lista de archivos y carpetas de este repo.
 
-![alt text](Windward.jpg)
+![Diagrama E-R tentativo del proyecto de ventas al por mayor y distribución](Windward.jpg)
