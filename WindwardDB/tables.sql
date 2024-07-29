@@ -23,6 +23,20 @@ CREATE TABLE DOCUMENTOS (
     sigla_documento varchar(5) NOT NULL,
     CONSTRAINT PK_DOCUMENTOS PRIMARY KEY (id_tipo_documento)
 );  
+CREATE TABLE PRODUCTOS (
+    id_producto int NOT NULL,
+    sku varchar(10) UNIQUE NOT NULL,
+    nombre_producto varchar(50) NULL,
+    descripcion_producto MEDIUMTEXT NULL,
+    marca_producto varchar(20) NULL,
+    dimension_longitud int NOT NULL,
+    dimension_ancho int NOT NULL,
+    dimension_alto int NOT NULL,
+    dimension_peso dec(3,2) NOT NULL,
+    nombre_contacto varchar(50) NULL,
+    stock int NOT NULL default 1,
+    CONSTRAINT PK_PRODUCTOS PRIMARY KEY (id_producto)
+);
 -- foreign keys
 -- Reference: FK_CLIENTE_TIPO_DOCUMENTO (table: CLIENTES)
 ALTER TABLE CLIENTES ADD CONSTRAINT FK_CLIENTE_TIPO_DOCUMENTO FOREIGN KEY FK_CLIENTE_TIPO_DOCUMENTO (tipo_documento)
