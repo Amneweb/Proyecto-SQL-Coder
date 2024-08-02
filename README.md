@@ -1,5 +1,9 @@
 # PROYECTO CURSO SQL DE CODERHOUSE
 
+Enlace al archivo con detalle de tablas
+
+https://docs.google.com/spreadsheets/d/1-eUCWY-VkGH3vUq4jT_UxRgGNy-ChXFRJeHKCe7AbH0/edit?usp=sharing
+
 ## Objetivo
 
 Diseñar una base de datos para una distribuidora mayorista de productos (que tiene transporte propio para realizar las entregas en un radio de hasta 40 km), de manera que los clientes puedan realizar sus pedidos online, que reciban la confirmación de los mismos y se programe el día en que realizará la entrega en base al domicilio.
@@ -36,3 +40,7 @@ https://docs.google.com/spreadsheets/d/1-eUCWY-VkGH3vUq4jT_UxRgGNy-ChXFRJeHKCe7A
 La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf de la lista de archivos y carpetas de este repo.
 
 ![Diagrama E-R tentativo del proyecto de ventas al por mayor y distribución](Windward.jpg)
+
+# DIAGRAMA DE TABLAS - REVERSE ENGINEER
+
+![Diagrama de tablas obtenido con la función Reverse Engineer de Workbench](WindwardDB/ReverseEngineer.jpg)
