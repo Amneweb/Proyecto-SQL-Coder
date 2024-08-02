@@ -140,7 +140,10 @@ CREATE TABLE REPARTOS (
     id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     id_pedido int NOT NULL,
     id_vehiculo int NOT NULL,
-    id_empleado int NOT NULL,
+    chofer int NOT NULL,
     kilometros int NULL,
     combustible dec (4,2)
+    FOREIGN KEY (id_pedido) REFERENCES PEDIDOS (id),
+    FOREIGN KEY (chofer) REFERENCES EMPLEADOS (id),
+    FOREIGN KEY (id_vehiculo) REFERENCES VEHICULOS (id)
 );
