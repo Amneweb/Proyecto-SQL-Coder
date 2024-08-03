@@ -44,7 +44,6 @@ La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf
 
 > [!NOTE]  
 > En el dibujo la tabla vehículos no tiene los atributos de máximos, pero sí van, tal como aparecen en el archivo sql y la definición de tablas
-> NOTA:
 
 ![Diagrama E-R tentativo del proyecto de ventas al por mayor y distribución](Windward.jpg)
 
