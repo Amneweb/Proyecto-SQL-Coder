@@ -14,6 +14,15 @@ CREATE TABLE TIPO_DOC (
     nombre_documento varchar(20) NULL,
     sigla varchar(5) NOT NULL PRIMARY KEY
 );
+
+-- Table: LISTAS
+CREATE TABLE LISTAS (
+    id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    moneda varchar(5) UNIQUE NOT NULL,
+    nombre varchar(20) NULL,
+    descripcion varchar(50) NULL
+);
+
 -- Table: CLIENTES
 CREATE TABLE CLIENTES (
     id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -29,7 +38,8 @@ CREATE TABLE CLIENTES (
     celular_contacto varchar(20) NOT NULL,
     lista_precios int NOT NULL,
     FOREIGN KEY (tipo_documento) REFERENCES TIPO_DOC (sigla),
-    FOREIGN KEY (zona) REFERENCES ZONAS (id)
+    FOREIGN KEY (zona) REFERENCES ZONAS (id),
+    FOREIGN KEY (lista_precios) REFERENCES LISTAS (id)
 );
 -- Table: PRODUCTOS  
 CREATE TABLE PRODUCTOS (
@@ -46,13 +56,7 @@ CREATE TABLE PRODUCTOS (
     stock int NOT NULL default 1
 );
 
--- Table: LISTAS
-CREATE TABLE LISTAS (
-    id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    moneda varchar(5) UNIQUE NOT NULL,
-    nombre varchar(20) NULL,
-    descripcion varchar(50) NULL
-);
+
 
 -- Table: VEHICULOS
 CREATE TABLE VEHICULOS (
