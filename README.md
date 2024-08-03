@@ -1,9 +1,5 @@
 # PROYECTO CURSO SQL DE CODERHOUSE
 
-Enlace al archivo con detalle de tablas
-
-https://docs.google.com/spreadsheets/d/1-eUCWY-VkGH3vUq4jT_UxRgGNy-ChXFRJeHKCe7AbH0/edit?usp=sharing
-
 ## Objetivo
 
 Diseñar una base de datos para una distribuidora mayorista de productos (que tiene transporte propio para realizar las entregas en un radio de hasta 40 km), de manera que los clientes puedan realizar sus pedidos online, que reciban la confirmación de los mismos y se programe el día en que realizará la entrega en base al domicilio.
@@ -24,16 +20,20 @@ Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una 
 
 **Elaborar una app online (de la cual este proyecto consistirá sólo en la base de datos) que permita a los clientes armar sus pedidos directamente.**
 
-- Los clientes tendrán acceso al sistema, en el que podrán elegir los productos y las cantidades (que ya tendrán el stock cargado).
+- Los clientes tendrán acceso al sistema, en el que podrán elegir los productos y las cantidades (el stock de los productos estará cargado en el sistema).
 - Una vez que el cliente armó su pedido, recibe confirmación del mismo y una orden de compra con el valor total de la misma. (Eventualmente se podría traer la información de las cuentas corrientes de los clientes, para que estos sepan si tienen deudas y a cuánto ascenderá la misma sumando el nuevo pedido)
-- Los encargados de depósito tendrán acceso al sistema y podrán ver los pedidos realizados y comenzar a armarlos (tal vez se requiera autorización de un gerente de distribución antes de que los encargados de depósito puedan tener el acceso a los pedidos)
+- Los encargados de depósito tendrán acceso al sistema y podrán ver los pedidos realizados y comenzar a armarlos (tal vez se requiera autorización de un gerente de distribución antes de que los encargados de depósito puedan tener el acceso a los pedidos. Eso lo definiré a medida que avance el curso.)
 - El sistema distribuirá los pedidos por días y zonas de entrega y armará la posible logística de entrega
-- Hay algunos clientes que no están familiarizados con la tecnología moderna, en cuyo caso seguirán haciendo los pedidos por whatsapp, pero el empleado, en lugar de pasar el pedido al excel, lo pasará al sistema como si fuera el propio cliente
 
 # TABLAS
 
 El siguiente enlace lleva a un archivo de google sheets con la definición de las tablas
 https://docs.google.com/spreadsheets/d/1-eUCWY-VkGH3vUq4jT_UxRgGNy-ChXFRJeHKCe7AbH0/edit?usp=sharing
+
+# COMENTARIOS / DUDAS
+
+Para resolver el problema planteado voy a necesitar información obtenida de las tablas, con datos provenientes de cálculos en base a datos de las tablas anteriores. Como no sé si esos "resultados" realmente se vuelcan a tablas, o si se presentan directamente sin guardarlos en tablas o vistas, no los puse en el diagrama entidad / relación.
+En la hoja de cálculo con los datos de las tablas, sí armé unas tablas especiales con los "resultados" (para distinguirlas, las puse al final de la planilla y tienen encabezado amarillo).
 
 # DIAGRAMA ENTIDAD RELACION
 

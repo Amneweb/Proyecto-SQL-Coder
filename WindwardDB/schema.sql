@@ -4,17 +4,17 @@ CREATE SCHEMA `windward` DEFAULT CHARACTER SET utf8 COLLATE utf8_spanish_ci ;
 USE windward;
 -- tables
 
--- Table: ZONA (5)
+-- Table: ZONA
 CREATE TABLE ZONAS (
     nombre varchar(20) NOT NULL,
     id int NOT NULL AUTO_INCREMENT PRIMARY KEY
 );
--- Table: DOCUMENTOS (2)
-CREATE TABLE DOCUMENTOS (
+-- Table: TIPO_DOC
+CREATE TABLE TIPO_DOC (
     nombre_documento varchar(20) NULL,
     sigla varchar(5) NOT NULL PRIMARY KEY
 );
--- Table: CLIENTES (1)
+-- Table: CLIENTES
 CREATE TABLE CLIENTES (
     id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     razon_social varchar(50) NOT NULL,
@@ -28,10 +28,10 @@ CREATE TABLE CLIENTES (
     nombre_contacto varchar(50) NULL,
     celular_contacto varchar(20) NOT NULL,
     lista_precios int NOT NULL,
-    FOREIGN KEY (tipo_documento) REFERENCES DOCUMENTOS (sigla),
+    FOREIGN KEY (tipo_documento) REFERENCES TIPO_DOC (sigla),
     FOREIGN KEY (zona) REFERENCES ZONAS (id)
 );
--- Table: PRODUCTOS (4)  
+-- Table: PRODUCTOS  
 CREATE TABLE PRODUCTOS (
     id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     sku varchar(10) UNIQUE NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE PRODUCTOS (
     stock int NOT NULL default 1
 );
 
--- Table: LISTAS (3)
+-- Table: LISTAS
 CREATE TABLE LISTAS (
     id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     moneda varchar(5) UNIQUE NOT NULL,
@@ -54,19 +54,20 @@ CREATE TABLE LISTAS (
     descripcion varchar(50) NULL
 );
 
--- Table: VEHICULOS (6)
+-- Table: VEHICULOS
 CREATE TABLE VEHICULOS (
     id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     patente varchar(10) UNIQUE NOT NULL,
     marca varchar(10) NULL,
     apodo varchar(10) NULL,
-    max_volumen int NOT NULL,
-    max_peso DEC (5,2) NOT NULL,
-    max_cantidades int NOT NULL
+    max_peso int NOT NULL,
+    max_volumen DEC (5,2) NOT NULL,
+    max_cantidades int NOT NULL,
+    consumo DEC (3,1) NOT NULL
 );
 
--- Table: PRECIOS (7)
-CREATE TABLE PRECIOS (
+-- Table: PRECIOS_PRODUCTO
+CREATE TABLE PRECIOS_PROODUCTO (
     id int NOT NULL AUTO_INCREMENT,
     id_producto int NOT NULL,
     id_lista int NOT NULL,
@@ -75,13 +76,13 @@ CREATE TABLE PRECIOS (
     FOREIGN KEY (id_lista) REFERENCES LISTAS (id)
 );
 
--- Table: ESTADOS (10)
+-- Table: ESTADOS
 CREATE TABLE ESTADOS (
     codigo varchar(3) NOT NULL PRIMARY KEY,
     descripcion varchar(20) NOT NULL
 );
 
--- Table: PEDIDOS (8)
+-- Table: PEDIDOS
 CREATE TABLE PEDIDOS (
     id int NOT NULL AUTO_INCREMENT,
     id_cliente int NOT NULL,
@@ -94,7 +95,7 @@ CREATE TABLE PEDIDOS (
     FOREIGN KEY (id_estado) REFERENCES ESTADOS (codigo)
 );
 
--- Table: PEDIDOS (9)
+-- Table: DETALLE_PEDIDOS
 CREATE TABLE DETALLE_PEDIDOS (
     id_pedido int NOT NULL ,
     id_producto int NOT NULL ,
@@ -104,14 +105,14 @@ PRIMARY KEY (id_pedido, id_producto),
     FOREIGN KEY (id_producto) REFERENCES PRODUCTOS (id)
 );
 
--- Table: ESTADOS (12)
+-- Table: ROLES
 CREATE TABLE ROLES (
     id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nombre varchar(10) NOT NULL,
     descripcion varchar(20) NULL
 );
 
--- Table: EMPLEADOS (11)
+-- Table: EMPLEADOS
 CREATE TABLE EMPLEADOS (
     id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nombre varchar(50) NOT NULL,
@@ -119,11 +120,11 @@ CREATE TABLE EMPLEADOS (
     nro_documento varchar(20) NOT NULL,
     telefono varchar(20) NULL,
     rol int NOT NULL,
-    FOREIGN KEY (tipo_documento) REFERENCES DOCUMENTOS (sigla),
+    FOREIGN KEY (tipo_documento) REFERENCES TIPO_DOC (sigla),
     FOREIGN KEY (rol) REFERENCES ROLES (id)
 );
 
--- Table: MODIFICACION_ESTADOS (13)
+-- Table: MODIFICACION_ESTADOS
 CREATE TABLE MODIFICACION_ESTADOS (
     id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     id_pedido int NOT NULL,
@@ -135,14 +136,13 @@ CREATE TABLE MODIFICACION_ESTADOS (
     FOREIGN KEY (id_estado) REFERENCES ESTADOS (codigo)
 );
 
--- Table: REPARTOS (14)
+-- Table: REPARTOS
 CREATE TABLE REPARTOS (
     id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     id_pedido int NOT NULL,
     id_vehiculo int NOT NULL,
     chofer int NOT NULL,
     kilometros int NULL,
-    combustible dec (4,2)
     FOREIGN KEY (id_pedido) REFERENCES PEDIDOS (id),
     FOREIGN KEY (chofer) REFERENCES EMPLEADOS (id),
     FOREIGN KEY (id_vehiculo) REFERENCES VEHICULOS (id)
