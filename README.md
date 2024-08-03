@@ -1,5 +1,8 @@
 # PROYECTO CURSO SQL DE CODERHOUSE
 
+> [!NOTE]  
+> El archivo de creación del schema y las tablas está dentro de la carpeta WindwardDB
+
 ## Objetivo
 
 Diseñar una base de datos para una distribuidora mayorista de productos (que tiene transporte propio para realizar las entregas en un radio de hasta 40 km), de manera que los clientes puedan realizar sus pedidos online, que reciban la confirmación de los mismos y se programe el día en que realizará la entrega en base al domicilio.
@@ -38,6 +41,10 @@ En la hoja de cálculo con los datos de las tablas, sí armé unas tablas especi
 # DIAGRAMA ENTIDAD RELACION
 
 La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf de la lista de archivos y carpetas de este repo.
+
+> [!NOTE]  
+> En el dibujo la tabla vehículos no tiene los atributos de máximos, pero sí van, tal como aparecen en el archivo sql y la definición de tablas
+> NOTA:
 
 ![Diagrama E-R tentativo del proyecto de ventas al por mayor y distribución](Windward.jpg)
 
