@@ -6,44 +6,45 @@ USE windward;
 
 -- Table: ZONA
 CREATE TABLE ZONAS (
-    nombre varchar(20) NOT NULL,
-    id int NOT NULL AUTO_INCREMENT PRIMARY KEY
+    id_zona int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    nombre varchar(40) NOT NULL
+    
 );
 -- Table: TIPO_DOC
-CREATE TABLE TIPO_DOC (
-    nombre_documento varchar(20) NULL,
-    sigla varchar(5) NOT NULL PRIMARY KEY
+CREATE TABLE TIPO_DOCUMENTO (
+    sigla varchar(5) NOT NULL PRIMARY KEY,
+    nombre_documento varchar(40) NULL
 );
 
 -- Table: LISTAS
 CREATE TABLE LISTAS (
-    id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    moneda varchar(5) UNIQUE NOT NULL,
-    nombre varchar(20) NULL,
+    id_lista int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    moneda varchar(5) NOT NULL,
+    nombre varchar(40) NULL,
     descripcion varchar(50) NULL
 );
 
 -- Table: CLIENTES
 CREATE TABLE CLIENTES (
-    id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id_cliente int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     razon_social varchar(50) NOT NULL,
     sobrenombre varchar(50) NULL,
-    tipo_documento varchar(10) NOT NULL,
+    fk_tipo_documento varchar(10) NOT NULL,
     nro_documento varchar(20) NOT NULL,
     direccion_calle varchar(50) NOT NULL,
     direccion_localidad varchar(20) NOT NULL,
     direccion_provincia varchar(20) NOT NULL,
-    zona int NOT NULL,
+    fk_zona int NOT NULL,
     nombre_contacto varchar(50) NULL,
     celular_contacto varchar(20) NOT NULL,
-    lista_precios int NOT NULL,
-    FOREIGN KEY (tipo_documento) REFERENCES TIPO_DOC (sigla),
-    FOREIGN KEY (zona) REFERENCES ZONAS (id),
-    FOREIGN KEY (lista_precios) REFERENCES LISTAS (id)
+    fk_lista_precios int NOT NULL,
+    FOREIGN KEY (fk_tipo_documento) REFERENCES TIPO_DOCUMENTO (sigla),
+    FOREIGN KEY (fk_zona) REFERENCES ZONAS (id_zona),
+    FOREIGN KEY (fk_lista_precios) REFERENCES LISTAS (id_lista)
 );
 -- Table: PRODUCTOS  
 CREATE TABLE PRODUCTOS (
-    id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id_producto int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     sku varchar(10) UNIQUE NOT NULL,
     nombre varchar(50) NULL,
     descripcion MEDIUMTEXT NULL,
@@ -51,8 +52,7 @@ CREATE TABLE PRODUCTOS (
     dimension_longitud int NOT NULL,
     dimension_ancho int NOT NULL,
     dimension_alto int NOT NULL,
-    dimension_peso dec(3,2) NOT NULL,
-    nombre_contacto varchar(50) NULL,
+    dimension_peso dec(5,2) NOT NULL,
     stock int NOT NULL default 1
 );
 
@@ -60,94 +60,97 @@ CREATE TABLE PRODUCTOS (
 
 -- Table: VEHICULOS
 CREATE TABLE VEHICULOS (
-    id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id_vehiculo int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     patente varchar(10) UNIQUE NOT NULL,
     marca varchar(10) NULL,
     apodo varchar(10) NULL,
     max_peso int NOT NULL,
-    max_volumen DEC (5,2) NOT NULL,
+    max_volumen DEC (8,2) NOT NULL,
     max_cantidades int NOT NULL,
-    consumo DEC (3,1) NOT NULL
+    consumo DEC (5,1) NOT NULL
 );
 
 -- Table: PRECIOS_PRODUCTO
-CREATE TABLE PRECIOS_PROODUCTO (
-    id int NOT NULL AUTO_INCREMENT,
-    id_producto int NOT NULL,
-    id_lista int NOT NULL,
-    PRIMARY KEY (id, id_producto),
-    FOREIGN KEY (id_producto) REFERENCES PRODUCTOS (id),
-    FOREIGN KEY (id_lista) REFERENCES LISTAS (id)
+CREATE TABLE PRECIOS_PRODUCTO (
+    id_precio int NOT NULL AUTO_INCREMENT,
+    fk_id_producto int NOT NULL,
+    fk_id_lista int NOT NULL,
+    PRIMARY KEY (id_precio, fk_id_producto),
+    FOREIGN KEY (fk_id_producto) REFERENCES PRODUCTOS (id_producto),
+    FOREIGN KEY (fk_id_lista) REFERENCES LISTAS (id_lista)
 );
+
+ALTER TABLE PRECIOS_PRODUCTO
+ADD precio dec(12,2) NOT NULL;
 
 -- Table: ESTADOS
 CREATE TABLE ESTADOS (
     codigo varchar(3) NOT NULL PRIMARY KEY,
-    descripcion varchar(20) NOT NULL
+    descripcion varchar(40) NOT NULL
 );
 
 -- Table: PEDIDOS
 CREATE TABLE PEDIDOS (
-    id int NOT NULL AUTO_INCREMENT,
-    id_cliente int NOT NULL,
-    id_estado varchar(3) NOT NULL DEFAULT "R",
+    id_pedido int NOT NULL AUTO_INCREMENT,
+    fk_id_cliente int NOT NULL,
+    fk_id_estado varchar(3) NOT NULL DEFAULT "R",
     fecha_pedido date NOT NULL DEFAULT (CURRENT_DATE),
     fecha_entrega date NOT NULL,
     fecha_efectiva_entrega date,
-    PRIMARY KEY (id, id_cliente),
-    FOREIGN KEY (id_cliente) REFERENCES CLIENTES (id),
-    FOREIGN KEY (id_estado) REFERENCES ESTADOS (codigo)
+    PRIMARY KEY (id_pedido),
+    FOREIGN KEY (fk_id_cliente) REFERENCES CLIENTES (id_cliente),
+    FOREIGN KEY (fk_id_estado) REFERENCES ESTADOS (codigo)
 );
 
 -- Table: DETALLE_PEDIDOS
 CREATE TABLE DETALLE_PEDIDOS (
-    id_pedido int NOT NULL ,
-    id_producto int NOT NULL ,
+    fk_id_pedido int NOT NULL ,
+    fk_id_producto int NOT NULL ,
     cantidad int NOT NULL DEFAULT 1,
-PRIMARY KEY (id_pedido, id_producto),
-    FOREIGN KEY (id_pedido) REFERENCES PEDIDOS (id),
-    FOREIGN KEY (id_producto) REFERENCES PRODUCTOS (id)
+PRIMARY KEY (fk_id_pedido, fk_id_producto),
+    FOREIGN KEY (fk_id_pedido) REFERENCES PEDIDOS (id_pedido),
+    FOREIGN KEY (fk_id_producto) REFERENCES PRODUCTOS (id_producto)
 );
 
 -- Table: ROLES
 CREATE TABLE ROLES (
-    id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id_rol int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nombre varchar(10) NOT NULL,
-    descripcion varchar(20) NULL
+    descripcion varchar(40) NULL
 );
 
 -- Table: EMPLEADOS
 CREATE TABLE EMPLEADOS (
-    id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id_empleado int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nombre varchar(50) NOT NULL,
-    tipo_documento varchar(10) NOT NULL,
+    fk_tipo_documento varchar(10) NOT NULL,
     nro_documento varchar(20) NOT NULL,
     telefono varchar(20) NULL,
-    rol int NOT NULL,
-    FOREIGN KEY (tipo_documento) REFERENCES TIPO_DOC (sigla),
-    FOREIGN KEY (rol) REFERENCES ROLES (id)
+    fk_rol int NOT NULL,
+    FOREIGN KEY (fk_tipo_documento) REFERENCES TIPO_DOCUMENTO (sigla),
+    FOREIGN KEY (fk_rol) REFERENCES ROLES (id_rol)
 );
 
 -- Table: MODIFICACION_ESTADOS
 CREATE TABLE MODIFICACION_ESTADOS (
-    id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    id_pedido int NOT NULL,
-    id_empleado int NOT NULL,
+    id_modificacion int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    fk_id_pedido int NOT NULL,
+    fk_id_empleado int NOT NULL,
     hora_modificacion date NOT NULL default (CURRENT_TIMESTAMP),
-    id_estado varchar(3) NOT NULL,
-    FOREIGN KEY (id_pedido) REFERENCES PEDIDOS (id),
-    FOREIGN KEY (id_empleado) REFERENCES EMPLEADOS (id),
-    FOREIGN KEY (id_estado) REFERENCES ESTADOS (codigo)
+    fk_id_estado varchar(3) NOT NULL,
+    FOREIGN KEY (fk_id_pedido) REFERENCES PEDIDOS (id_pedido),
+    FOREIGN KEY (fk_id_empleado) REFERENCES EMPLEADOS (id_empleado),
+    FOREIGN KEY (fk_id_estado) REFERENCES ESTADOS (codigo)
 );
 
 -- Table: REPARTOS
 CREATE TABLE REPARTOS (
-    id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    id_pedido int NOT NULL,
-    id_vehiculo int NOT NULL,
-    chofer int NOT NULL,
+    id_reparto int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    fk_id_pedido int NOT NULL,
+    fk_id_vehiculo int NOT NULL,
+    fk_chofer int NOT NULL,
     kilometros int NULL,
-    FOREIGN KEY (id_pedido) REFERENCES PEDIDOS (id),
-    FOREIGN KEY (chofer) REFERENCES EMPLEADOS (id),
-    FOREIGN KEY (id_vehiculo) REFERENCES VEHICULOS (id)
+    FOREIGN KEY (fk_id_pedido) REFERENCES PEDIDOS (id_pedido),
+    FOREIGN KEY (fk_chofer) REFERENCES EMPLEADOS (id_empleado),
+    FOREIGN KEY (fk_id_vehiculo) REFERENCES VEHICULOS (id_vehiculo)
 );
