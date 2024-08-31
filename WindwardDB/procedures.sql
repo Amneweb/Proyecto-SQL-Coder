@@ -5,6 +5,10 @@
 
 USE windward;
 
+----------------------------------------
+-- TRIGGER add_new_pedido
+----------------------------------------
+
 -- Este trigger es para tomar el id generado al momento de cargar un pedido (como el id es autoincremental y se genera automáticamente, no lo sabemos de antemano, y me pareció 
 -- que esta era una buena manera de obtenerlo y asegurarme de que sea el id que se genera en la misma conexión, cosa que no ocurriría haciendo un select del ultimo id generado 
 -- porque si justo hubo un cliente que generó un pedido un segundo después, el select me devolvería un id de otro cliente)
@@ -13,9 +17,11 @@ AFTER INSERT ON `PEDIDOS`
 FOR EACH ROW
 SET @idNuevoPedido = NEW.id_pedido;
 
+----------------------------------------
+-- SP sp_generar_pedidos
+----------------------------------------
 
--- Este SP es para agregar los productos y las respectivas cantidades a la tabla detalle de pedidos, y toma como dato el id generado en la tabla PEDIDOS, que
--- lo recupero con el trigger anterior. Los datos de entrada son:
+-- Este SP es para agregar los productos y las respectivas cantidades a la tabla detalle de pedidos, y toma como dato el id generado en la tabla PEDIDOS, que lo recupero con el trigger anterior. Los datos de entrada son:
 -- 1) El id del cliente
 -- 2) Un json con los productos y las cantidades
 -- Los pasos del SP son:
@@ -40,6 +46,8 @@ INSERT INTO detalle_provisorio (producto, cantidad) SELECT * FROM JSON_TABLE(jso
 DROP TABLE detalle_provisorio;
 END $$
 
--- Ejemplo de llamado al SP. Hay que tener cuidado con el id del cliente. Como se genera automáticamente, no sé si en las tablas
--- de prueba llega a existir el id '15'
-CALL sp_generar_pedidos (15,'[{"producto":1,"cantidad":2},{"producto":2,"cantidad":10}]');
+----------------------------------------
+-- FUNCION fn_generar_variable_lista
+----------------------------------------
+-- Función para poder usar la variable id_lista en la vista de precios por lista en base al id del cliente (para poder usar el id del cliente como variable y no como valor fijo en la cláusula de WHERE)
+CREATE FUNCTION `fn_generar_variable_lista` (cliente INT) RETURNS INT DETERMINISTIC RETURN (SELECT fk_lista_precios FROM CLIENTES WHERE id_cliente = cliente);
