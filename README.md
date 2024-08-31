@@ -33,10 +33,6 @@ Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una 
 El siguiente enlace lleva a un archivo de google sheets con la definición de las tablas
 https://docs.google.com/spreadsheets/d/1-eUCWY-VkGH3vUq4jT_UxRgGNy-ChXFRJeHKCe7AbH0/edit?usp=sharing
 
-# COMENTARIOS / DUDAS
-
-Para resolver el problema planteado voy a necesitar información obtenida de las tablas, con datos provenientes de cálculos en base a datos de las tablas anteriores. Como no sé si esos "resultados" realmente se vuelcan a tablas, o si se presentan directamente sin guardarlos en tablas o vistas, no los puse en el diagrama entidad / relación.
-En la hoja de cálculo con los datos de las tablas, sí armé unas tablas especiales con los "resultados" (para distinguirlas, las puse al final de la planilla y tienen encabezado amarillo).
 
 # DIAGRAMA ENTIDAD RELACION
 
@@ -50,3 +46,31 @@ La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf
 # DIAGRAMA DE TABLAS - REVERSE ENGINEER
 
 ![Diagrama de tablas obtenido con la función Reverse Engineer de Workbench](WindwardDB/ReverseEngineer.jpg)
+
+# Esquema básico de prueba para la segunda entrega
+
+Una vez cargadas las vistas, funciones, triggers y stored procedures, se pueden imitar el camino que seguría un cliente una vez que ingresa a la aplicación:
+
+1) Ver todos los productos que puede comprar con sus respectivos precios, en base a la lista de precios del cliente. Para esto se utiliza la vista **productos_con_precio**
+
+```
+SET @cliente = 14;
+SELECT * FROM productos_con_precios WHERE lista = generar_variable_lista(@cliente);
+```
+
+2) Una vez elegidos los productos, el cliente enviará el formulario de compra con todos los datos de los productos y cantidades. Eso disparará el stored procedure **sp_generar_pedido**
+> [!NOTE]
+> En el código que sigue, primero se deberá verificar que exista un cliente con id=15, porque los id se autogeneran. En mi caso, tengo un id de cliente = 15, pero por favor primero verificar, sino el código va a dar error.
+
+
+```
+CALL sp_generar_pedidos (15,'[{"producto":1,"cantidad":2},{"producto":2,"cantidad":10}]');
+SELECT * FROM windward.pedidos_por_cliente;
+```
+
+3) Se puede ver el pedido con el detalle de productos y cantidades usando la vista **pedidos_por_cliente**
+
+```
+SET @cliente = 15;
+SELECT * FROM pedidos_por_cliente WHERE id_cliente = @cliente;
+```

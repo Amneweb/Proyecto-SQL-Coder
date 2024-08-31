@@ -9,9 +9,8 @@ USE windward;
 -- TRIGGER add_new_pedido
 ----------------------------------------
 
--- Este trigger es para tomar el id generado al momento de cargar un pedido (como el id es autoincremental y se genera automáticamente, no lo sabemos de antemano, y me pareció 
--- que esta era una buena manera de obtenerlo y asegurarme de que sea el id que se genera en la misma conexión, cosa que no ocurriría haciendo un select del ultimo id generado 
--- porque si justo hubo un cliente que generó un pedido un segundo después, el select me devolvería un id de otro cliente)
+-- Este trigger es para tomar el id generado al momento de cargar un pedido (como el id es autoincremental y se genera automáticamente, no lo sabemos de antemano, y me pareció que esta era una buena manera de obtenerlo y asegurarme de que sea el id que se genera en la misma conexión, cosa que no ocurriría haciendo un select del ultimo id generado porque si justo hubo un cliente que generó un pedido un segundo después, el select me devolvería un id de otro cliente)
+
 CREATE TRIGGER `tr_add_new_pedido`
 AFTER INSERT ON `PEDIDOS`
 FOR EACH ROW
