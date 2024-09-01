@@ -38,6 +38,7 @@ INSERT INTO detalle_provisorio (producto, cantidad) SELECT * FROM JSON_TABLE(jso
 )) AS detalles_json;
 
     INSERT INTO DETALLE_PEDIDOS (fk_id_producto, cantidad,fk_id_pedido ) (SELECT producto, cantidad, @idNuevoPedido FROM detalle_provisorio );
+	SELECT @msj;
 DROP TABLE detalle_provisorio;
 END $$
 
@@ -112,6 +113,8 @@ BEGIN
 DECLARE i INT;
 DECLARE n INT;
 set @IDpedido = idpedido;
+set @EstadoPedido = (SELECT fk_id_estado FROM PEDIDOS WHERE id_pedido = @IDpedido);
+IF (@EstadoPedido != "APR") THEN 
 UPDATE PEDIDOS SET fk_id_estado = "APR" WHERE id_pedido = @IDpedido;
 DROP TABLE IF EXISTS stock_temporal;
 CREATE TABLE stock_temporal (SELECT fk_id_producto AS IDproducto, cantidad FROM DETALLE_PEDIDOS WHERE fk_id_pedido = @IDpedido);
@@ -126,5 +129,22 @@ SET i = i + 1;
 
 END WHILE;
 DROP TABLE stock_temporal;
+ELSE
+SET @msj = "El pedido ya estaba aprobado";
+SELECT @msj;
+END IF;
 END $$
 
+DELIMITER $$
+CREATE TRIGGER `tr_verificar_stock`
+BEFORE INSERT ON DETALLE_PEDIDOS
+FOR EACH ROW
+BEGIN
+SET @msj = '';
+SET @stock_existente = (SELECT stock FROM PRODUCTOS WHERE id_producto = NEW.fk_id_producto);
+IF NEW.cantidad > @stock_existente THEN
+SET NEW.cantidad = @stock_existente;
+SET @msj=CONCAT("La cantidad requerida del producto con id ",NEW.fk_id_producto," es mayor que la existene en el stock. El pedido se cargará sólo con el stock existente"); ELSE
+SET @msj=CONCAT("El producto con id ",NEW.fk_id_producto," se ha cargado en el pedido con la cantidad solicitada");
+END IF;
+END$$
