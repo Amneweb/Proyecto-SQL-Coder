@@ -51,6 +51,9 @@ La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf
 
 Para probar lo hecho hasta ahora primero se deberá correr el archivo index.sql, que genera el schema, los objetos y carga los datos. (Se pueden también hacer correr los archivos por separado, en el orden que sigue: schema, datos, procedures, views.)
 En cada archivo sql y antes de la definición de cada objeto, se puede ver la descripción de cada uno y las tablas que involucra.
+### MANEJO DE ERRORES 
+Importante: NO todos los procesos y funciones tienen programado un manejo de errores, por lo que si se prueban los procesos con claves incorrectas o datos no válidos, podría haber errores, no por el proceso sino por los datos de entrada.
+
 Una vez cargadas las vistas, funciones, triggers y stored procedures, se puede imitar el camino que seguría un cliente una vez que ingresa a la aplicación:
 > [!NOTE]
 > En los snippets de código que siguen, primero se deberá verificar que existan un cliente con id=15 y otro con id=14, porque los id se autogeneran. En mi caso, tengo los id usados, pero por favor verificar antes para que no den error.
