@@ -69,9 +69,15 @@ CALL sp_generar_pedidos (15,'[{"producto":1,"cantidad":2},{"producto":2,"cantida
 SELECT * FROM windward.pedidos_detallados;
 ```
 
+El SP de generar pedidos inserta los registros en la tabla detalle de pedidos, pero ANTES dispara un trigger sp_verificar_stock, adjuntado a la tabla DETALLE_PEDIDOS, que verifica las cantidades en stock. Si hay menos productos de los que se piden, al pedido sólo se le suma la cantidad de stock existente.
+
 3) Se puede ver el pedido con el detalle de productos y cantidades usando la vista **pedidos_detallados**
 
 ```
 SET @cliente = 15;
 SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
+```
+4) En cuanto el encargado de depósito o la administración verifican las existencias de stock, pasan el estado de un pedido a APROBADO. En ese momento se dan debaja las unidades del stock que forman parte del pedido (este proceso se podría hacer cuando el cliente arma su pedido, para que un cliente que compra después vea el stock real, pero son decisiones de la lógica de cada negocio, que habría que evaluar en cada situación. En este caso el propósito del trabajo práctico es programar un stored procedure, y decidí hacerlo cuando se aprueba el pedido.)
+```
+CALL sp_aprobar_pedido (14)
 ```
