@@ -49,7 +49,11 @@ La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf
 
 # Esquema básico de prueba para la segunda entrega
 
-Una vez cargadas las vistas, funciones, triggers y stored procedures, se pueden imitar el camino que seguría un cliente una vez que ingresa a la aplicación:
+Para probar lo hecho hasta ahora primero se deberá correr el archivo index.sql, que genera el schema, los objetos y carga los datos. (Se pueden también hacer correr los archivos por separado, en el orden que sigue: schema, datos, procedures, views.)
+En cada archivo sql y antes de la definición de cada objeto, se puede ver la descripción de cada uno y las tablas que involucra.
+Una vez cargadas las vistas, funciones, triggers y stored procedures, se puede imitar el camino que seguría un cliente una vez que ingresa a la aplicación:
+> [!NOTE]
+> En los snippets de código que siguen, primero se deberá verificar que existan un cliente con id=15 y otro con id=14, porque los id se autogeneran. En mi caso, tengo los id usados, pero por favor verificar antes para que no den error.
 
 1) Ver todos los productos que puede comprar con sus respectivos precios, en base a la lista de precios del cliente. Para esto se utiliza la vista **productos_con_precio**
 
@@ -59,18 +63,15 @@ SELECT * FROM productos_con_precios WHERE lista = generar_variable_lista(@client
 ```
 
 2) Una vez elegidos los productos, el cliente enviará el formulario de compra con todos los datos de los productos y cantidades. Eso disparará el stored procedure **sp_generar_pedido**
-> [!NOTE]
-> En el código que sigue, primero se deberá verificar que exista un cliente con id=15, porque los id se autogeneran. En mi caso, tengo un id de cliente = 15, pero por favor primero verificar, sino el código va a dar error.
-
 
 ```
 CALL sp_generar_pedidos (15,'[{"producto":1,"cantidad":2},{"producto":2,"cantidad":10}]');
-SELECT * FROM windward.pedidos_por_cliente;
+SELECT * FROM windward.pedidos_detallados;
 ```
 
-3) Se puede ver el pedido con el detalle de productos y cantidades usando la vista **pedidos_por_cliente**
+3) Se puede ver el pedido con el detalle de productos y cantidades usando la vista **pedidos_detallados**
 
 ```
 SET @cliente = 15;
-SELECT * FROM pedidos_por_cliente WHERE id_cliente = @cliente;
+SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 ```

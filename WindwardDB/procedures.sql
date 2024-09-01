@@ -1,8 +1,3 @@
--- 1) CARGAR UN PEDIDO 
--- 1.a Carga un nuevo registro en la tabla de pedidos, ingresando el id del cliente, la fecha y el estado del pedido que será "HEC"
--- 1.b Teniendo el id del pedido generado cuando insertamos el registro, generamos los registros en la tabla detalle de pedidos en base al id mencionado y al array de productos
--- Los datos de entrada son: id de cliente, array de productos [id_producto, cantidad]
-
 USE windward;
 
 ----------------------------------------
@@ -29,6 +24,7 @@ SET @idNuevoPedido = NEW.id_pedido;
 -- 3) Convierte los datos del json en una tabla provisoria
 -- 4) Guarda los datos de la tabla provisoria junto con el id del pedido en la tabla detalle de pedidos
 -- 5) Borra la tabla provisoria
+
 DELIMITER $$
 CREATE PROCEDURE `sp_generar_pedidos` (IN id_cliente INT, IN json_pedido JSON)
 BEGIN
@@ -48,5 +44,87 @@ END $$
 ----------------------------------------
 -- FUNCION fn_generar_variable_lista
 ----------------------------------------
+
 -- Función para poder usar la variable id_lista en la vista de precios por lista en base al id del cliente (para poder usar el id del cliente como variable y no como valor fijo en la cláusula de WHERE)
+
 CREATE FUNCTION `fn_generar_variable_lista` (cliente INT) RETURNS INT DETERMINISTIC RETURN (SELECT fk_lista_precios FROM CLIENTES WHERE id_cliente = cliente);
+
+----------------------------------------
+-- FUNCION fn_volumen_individual
+----------------------------------------
+
+-- Función para calcular el volumen de cada producto en un determinado pedido - el volumen es para la cantidada total de dicho producto. Los parámetros de entrada son las dimensiones del producto -en cm- y la salida es el volumen en m3.
+
+CREATE FUNCTION `fn_volumen_individual` (alto INT,ancho INT, largo INT, cantidad INT) RETURNS DEC(8,2)
+NO SQL
+RETURN (alto/100*ancho/100*largo/100*cantidad);
+
+----------------------------------------
+-- FUNCION fn_peso_individual
+----------------------------------------
+
+-- Función para calcular el peso por producto en cada pedido. (= peso individual x cantidad)
+
+CREATE FUNCTION `fn_peso_individual` (peso FLOAT,cantidad INT) RETURNS FLOAT
+NO SQL
+RETURN (peso*cantidad);
+
+----------------------------------------
+-- SP sp_borrar_pedido
+----------------------------------------
+
+-- SP que permite que un cliente borre un pedido completo. Se utiliza el control de errores mostrado en clase como ejemplo.
+-- Como hay integridad de datos entre las tablas PEDIDO y DETALLE_PEDIDOS, al borrar un pedido se borran los registros correspondientes en la tabla detalle de pedidos
+-- Los parámetros de entrada son los id de cliente y pedido. Se verifica que existan los correspondientes cliente y pedido y que el pedido le pertenezca al cliente.
+
+DELIMITER $$
+CREATE PROCEDURE `sp_borrar_pedido` (IN IDcliente INT, IN IDpedido INT)
+BEGIN
+IF (IDcliente = 0 OR IDpedido = 0) THEN
+		SET @err = 'ni el id del cliente ni el id del pedido deben ser 0';
+        SELECT @err;
+        ELSE
+		SET @err = '';
+		IF NOT EXISTS
+        (SELECT id_cliente from CLIENTES WHERE id_cliente = IDcliente) THEN
+			SET @err = CONCAT('No existe el cliente con ID ', IDcliente);
+        	END IF;
+            IF NOT EXISTS
+        (SELECT id_pedido from PEDIDOS WHERE id_pedido = IDpedido) THEN
+			SET @err = CONCAT('No existe el pedido con ID ', IDpedido);
+        	END IF;
+        	IF NOT EXISTS
+            (SELECT id_pedido from PEDIDOS WHERE (id_pedido = IDpedido AND fk_id_cliente = IDcliente)) THEN
+			SET @err = CONCAT('El pedido con id ', IDpedido, ' no corresponde al cliente con id ',IDcliente);
+        	END IF;
+        	IF @err != '' THEN
+			SELECT @err;
+		ELSE
+			DELETE FROM PEDIDOS WHERE id_pedido = IDpedido;
+		END IF;
+	END IF;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_aprobar_pedido;
+DELIMITER $$
+CREATE PROCEDURE `sp_aprobar_pedido` (IN idpedido INT)
+BEGIN
+DECLARE i INT;
+DECLARE n INT;
+set @IDpedido = idpedido;
+UPDATE PEDIDOS SET fk_id_estado = "APR" WHERE id_pedido = @IDpedido;
+DROP TABLE IF EXISTS stock_temporal;
+CREATE TABLE stock_temporal (SELECT fk_id_producto AS IDproducto, cantidad FROM DETALLE_PEDIDOS WHERE fk_id_pedido = @IDpedido);
+SET n = (SELECT COUNT(*) FROM stock_temporal);
+SET i=0;
+WHILE i < n DO
+SET @id_pedido_i = (SELECT IDproducto FROM stock_temporal LIMIT i,1);
+UPDATE PRODUCTOS
+SET stock = stock - (SELECT cantidad FROM stock_temporal LIMIT i,1) 
+WHERE id_producto = @id_pedido_i;
+SET i = i + 1;
+
+END WHILE;
+DROP TABLE stock_temporal;
+END $$
+

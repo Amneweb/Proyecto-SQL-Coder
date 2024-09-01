@@ -93,7 +93,7 @@ CREATE TABLE ESTADOS (
 CREATE TABLE PEDIDOS (
     id_pedido int NOT NULL AUTO_INCREMENT,
     fk_id_cliente int NOT NULL,
-    fk_id_estado varchar(3) NOT NULL DEFAULT "R",
+    fk_id_estado varchar(3) NOT NULL DEFAULT "HEC",
     fecha_pedido date NOT NULL DEFAULT (CURRENT_DATE),
     fecha_entrega date NOT NULL,
     fecha_efectiva_entrega date,
@@ -154,3 +154,16 @@ CREATE TABLE REPARTOS (
     FOREIGN KEY (fk_chofer) REFERENCES EMPLEADOS (id_empleado),
     FOREIGN KEY (fk_id_vehiculo) REFERENCES VEHICULOS (id_vehiculo)
 );
+
+-- Create constraint entre pedidos y detalle de pedidos para borrar en cascada. Primero miramos los nombres de las claves constraint.
+SHOW CREATE TABLE PEDIDOS;
+SHOW CREATE TABLE DETALLE_PEDIDOS;
+
+ALTER TABLE DETALLE_PEDIDOS
+DROP FOREIGN KEY detalle_pedidos_ibfk_1;
+
+ALTER TABLE DETALLE_PEDIDOS
+ADD CONSTRAINT detalle_pedidos_ibfk_1
+FOREIGN KEY (fk_id_pedido)
+REFERENCES PEDIDOS (id_pedido)
+ON DELETE CASCADE;

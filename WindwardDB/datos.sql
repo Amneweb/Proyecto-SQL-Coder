@@ -1,15 +1,15 @@
-insert into TIPO_DOCUMENTO VALUES ("DNI","Documento Nacional de Identidad"),
+INSERT INTO TIPO_DOCUMENTO VALUES ("DNI","Documento Nacional de Identidad"),
 ("CI","Cedula de Identidad"),("CUIT","Clave Unica de Identificacion Tributaria"),("CUIL","Clave Unica de Identificacion Laboral");
 
-insert into ZONAS (nombre) VALUES ("Norte del GBA, hasta San Fernando"),
+INSERT INTO ZONAS (nombre) VALUES ("Norte del GBA, hasta San Fernando"),
 ("Zarate"),("Oeste del GBA, hasta Gonzalez Catan"),("Sur del GBA, hasta La Plata");
 
-insert into LISTAS (moneda, nombre, descripcion) VALUES ("ARS","50%","50% respecto al precio de lista"),("ARS","45 + 5%","5% sobre el 45% del precio de lista"),("ARS","45%","45% del precio de lista"),("ARS","MAYORISTA","Lista especial de EDNA");
+INSERT INTO LISTAS (moneda, nombre, descripcion) VALUES ("ARS","50%","50% respecto al precio de lista"),("ARS","45 + 5%","5% sobre el 45% del precio de lista"),("ARS","45%","45% del precio de lista"),("ARS","MAYORISTA","Lista especial de EDNA");
 
-insert into ESTADOS VALUES ("HEC","Pedido recien hecho por el cliente"),("APR","Pedido aprobado por administracion"),
+INSERT INTO ESTADOS VALUES ("HEC","Pedido recien hecho por el cliente"),("APR","Pedido aprobado por administracion"),
 ("STO","Stock de productos ok"),("CAR","Pedido completo cargado en la camioneta"),("REP","Pedido en reparto"),("ENT","Pedido entregado");
 
-insert into ROLES (nombre,descripcion) VALUES ("DEPOSITO","Encargado de deposito"),("ADMIN","Empleado de administracion"),("CHOFER","Chofer de vehiculos de reparto");
+INSERT INTO ROLES (nombre,descripcion) VALUES ("DEPOSITO","Encargado de deposito"),("ADMIN","Empleado de administracion"),("CHOFER","Chofer de vehiculos de reparto");
 
 INSERT INTO PRODUCTOS (sku, nombre, descripcion, marca, dimension_longitud, dimension_ancho, dimension_alto, dimension_peso, stock) VALUES
 	('FW90', 'Edna 12x75 FW90 Linea Premium', 'Batería de 12x75 amperes, calcio-plata, marca Edna, fabricada en Argentina', 'EDNA', 185, 140, 190, 18, 10),
@@ -18,7 +18,7 @@ INSERT INTO PRODUCTOS (sku, nombre, descripcion, marca, dimension_longitud, dime
 
 INSERT INTO EMPLEADOS (nombre,fk_tipo_documento,nro_documento,telefono,fk_rol)VALUES("Mario Daniel","DNI","40000000","116666666",3), ("Mario Guillermo","DNI","40000001","116666666",3),("Mario Ramirez","DNI","40000002","116666666",3);
 
-insert into CLIENTES (razon_social,sobrenombre,fk_tipo_documento,nro_documento,direccion_calle,direccion_localidad,direccion_provincia,fk_zona,nombre_contacto,celular_contacto,fk_lista_precios) VALUES 
+INSERT INTO CLIENTES (razon_social,sobrenombre,fk_tipo_documento,nro_documento,direccion_calle,direccion_localidad,direccion_provincia,fk_zona,nombre_contacto,celular_contacto,fk_lista_precios) VALUES 
 ("Baterias SRL","Mr Baterias","CUIT","11111111","direccion 1","localidad 1","Buenos Aires",1,"nombre 1","01133333333",1),
 ("Lubricentro Pepito S de H","Lubricentro Pepito","CUIT","11111112","direccion 2","localidad 1","Buenos Aires",1,"nombre 2","01133333332",1),
 ("Fulano y Mengano","Baterias Fulanito","CUIT","11111113","direccion 3","localidad 2","Buenos Aires",2,"nombre 3","01133333331",2),
@@ -28,8 +28,21 @@ insert into CLIENTES (razon_social,sobrenombre,fk_tipo_documento,nro_documento,d
 ("Baterias de JC y AZ","Los amigos","CUIL","11111117","direccion 6","localidad 4","Buenos Aires",2,"nombre apellido","01133333335",1),
 ("Insumos para vehiculos SRL","Delivery de baterias","CUIL","11111118","direccion 7","localidad 4","Buenos Aires",2,"nombre 20","01133333338",1);
 
-insert into PRECIOS_PRODUCTO (fk_id_producto,fk_id_lista,precio) VALUES 
+INSERT INTO PRECIOS_PRODUCTO (fk_id_producto,fk_id_lista,precio) VALUES 
 (1,1,15000),(1,2,20000),(1,3,12000),
 (2,1,12000),(2,2,15000),(2,3,10000),
 (3,1,25000),(3,2,30000),(3,3,22000);
+
+INSERT INTO PEDIDOS (fk_id_cliente, fk_id_estado, fecha_pedido, fecha_entrega, fecha_efectiva_entrega)
+VALUES (11, "HEC", '2024-08-31','2024-08-31',NULL),
+(10, "HEC", '2024-08-31','2024-08-31',NULL),
+(16, "HEC", '2024-08-31','2024-08-31',NULL),
+(14, "HEC", '2024-08-31','2024-08-31',NULL);
+
+INSERT INTO DETALLE_PEDIDOS (fk_id_pedido,fk_id_producto,cantidad)
+VALUES (10,1,10),(10,2,5),(10,5,2),(11,2,3),(12,4,15),(12,2,5),(12,1,21),(13,2,20),(13,1,1);
+
+INSERT INTO ESTADOS VALUES ("SBY","Stand By, en espera de stock o lugar");
+
+
 

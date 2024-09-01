@@ -1,22 +1,22 @@
 ------------------------------------------
--- VISTA pedidos_por_cliente
+-- VISTA pedidos_detallados
 ------------------------------------------
 
 -- Vista que muestra el listado de pedidos ordenado por pedido, incluyendo el detalle 'producto - cantidad'
 -- Combina las tablas PEDIDOS, PRODUCTOS, CLIENTES y DETALLE_PEDIDOS
 
-CREATE OR REPLACE VIEW pedidos_por_cliente AS
+CREATE OR REPLACE VIEW pedidos_detallados AS
 (SELECT c.razon_social, p.fecha_pedido, p.id_pedido, d.cantidad, pro.sku, pro.nombre FROM CLIENTES c INNER JOIN PEDIDOS p ON c.id_cliente = p.fk_id_cliente INNER JOIN DETALLE_PEDIDOS d ON d.fk_id_pedido = p.id_pedido INNER JOIN PRODUCTOS pro ON d.fk_id_producto=pro.id_producto ORDER BY d.fk_id_pedido);
 
 -- Opciones de SELECT para la vista anterior
 ---------------------------------------------
 
 -- 1) TODOS LOS CLIENTES
-SELECT * FROM pedidos_por_cliente;
+SELECT * FROM pedidos_detallados;
 
 -- 2) UN CLIENTE (usando una variable)
 SET @cliente = 15;
-SELECT * FROM pedidos_por_cliente WHERE id_cliente = @cliente;
+SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 
 ------------------------------------------
 -- VISTA productos_con_precios
@@ -53,3 +53,15 @@ FROM (SELECT pro.sku as 'sku', pro.nombre as 'nombre', pro.stock as 'stock', pre
 GROUP BY sku);
 
 SELECT * FROM pivot_productos_con_precios;
+
+CREATE OR REPLACE VIEW dimensiones AS
+(SELECT c.fk_zona AS 'zona', p.fecha_pedido AS 'fecha', p.id_pedido, d.cantidad AS 'qty', pro.sku AS 'SKU', pro.dimension_longitud AS 'longitud', pro.dimension_alto AS 'alto',pro.dimension_ancho AS 'ancho', pro.dimension_peso AS 'peso',fn_volumen_individual(pro.dimension_longitud,pro.dimension_alto,pro.dimension_ancho, d.cantidad) AS 'volumen',fn_peso_individual(pro.dimension_peso, d.cantidad) AS 'peso_total' FROM CLIENTES c INNER JOIN PEDIDOS p ON c.id_cliente = p.fk_id_cliente INNER JOIN DETALLE_PEDIDOS d ON d.fk_id_pedido = p.id_pedido INNER JOIN PRODUCTOS pro ON d.fk_id_producto=pro.id_producto ORDER BY c.fk_zona DESC,p.id_pedido ASC);
+
+SELECT * FROM dimensiones;
+
+SELECT * FROM dimensiones WHERE zona = 1;
+
+CREATE OR REPLACE VIEW totales_por_fecha AS (SELECT zona, fecha, sum(volumen) AS 'volumen total', sum(peso_total) AS 'peso total', sum(qty) AS 'cantidad total' FROM dimensiones WHERE fecha='2024-08-31' GROUP BY zona);
+
+SELECT * FROM totales_por_fecha;
+
