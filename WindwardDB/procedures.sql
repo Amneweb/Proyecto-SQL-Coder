@@ -1,8 +1,6 @@
-USE windward;
-
-----------------------------------------
+-- --------------------------------------
 -- TRIGGER add_new_pedido
-----------------------------------------
+-- --------------------------------------
 
 -- Este trigger es para tomar el id generado al momento de cargar un pedido (como el id es autoincremental y se genera automáticamente, no lo sabemos de antemano, y me pareció que esta era una buena manera de obtenerlo y asegurarme de que sea el id que se genera en la misma conexión, cosa que no ocurriría haciendo un select del ultimo id generado porque si justo hubo un cliente que generó un pedido un segundo después, el select me devolvería un id de otro cliente)
 
@@ -11,9 +9,9 @@ AFTER INSERT ON `PEDIDOS`
 FOR EACH ROW
 SET @idNuevoPedido = NEW.id_pedido;
 
-----------------------------------------
+-- --------------------------------------
 -- SP sp_generar_pedidos
-----------------------------------------
+-- --------------------------------------
 
 -- Este SP es para agregar los productos y las respectivas cantidades a la tabla detalle de pedidos, y toma como dato el id generado en la tabla PEDIDOS, que lo recupero con el trigger anterior. Los datos de entrada son:
 -- 1) El id del cliente
@@ -23,7 +21,8 @@ SET @idNuevoPedido = NEW.id_pedido;
 -- 2) Una vez insertado el pedido, el trigger devuelve el nuevo id del pedido
 -- 3) Convierte los datos del json en una tabla provisoria
 -- 4) Guarda los datos de la tabla provisoria junto con el id del pedido en la tabla detalle de pedidos
--- 5) Borra la tabla provisoria
+-- 5) Justo antes del insert en la tabla detalle de pedidos, se dispara el trigger de verificación de stock, para no generar pedidos con más cantidades de las existentes. Si de un producto se pide una cantidad mayor al stock, el trigger hace que la cantidad guardada en el pedido sea igual al stock.
+-- 6) Borra la tabla provisoria y devuelve los mensajes de alerta generados por el trigger
 
 DELIMITER $$
 CREATE PROCEDURE `sp_generar_pedidos` (IN id_cliente INT, IN json_pedido JSON)
@@ -42,37 +41,9 @@ INSERT INTO detalle_provisorio (producto, cantidad) SELECT * FROM JSON_TABLE(jso
 DROP TABLE detalle_provisorio;
 END $$
 
-----------------------------------------
--- FUNCION fn_generar_variable_lista
-----------------------------------------
-
--- Función para poder usar la variable id_lista en la vista de precios por lista en base al id del cliente (para poder usar el id del cliente como variable y no como valor fijo en la cláusula de WHERE)
-
-CREATE FUNCTION `fn_generar_variable_lista` (cliente INT) RETURNS INT DETERMINISTIC RETURN (SELECT fk_lista_precios FROM CLIENTES WHERE id_cliente = cliente);
-
-----------------------------------------
--- FUNCION fn_volumen_individual
-----------------------------------------
-
--- Función para calcular el volumen de cada producto en un determinado pedido - el volumen es para la cantidada total de dicho producto. Los parámetros de entrada son las dimensiones del producto -en cm- y la salida es el volumen en m3.
-
-CREATE FUNCTION `fn_volumen_individual` (alto INT,ancho INT, largo INT, cantidad INT) RETURNS DEC(8,2)
-NO SQL
-RETURN (alto/100*ancho/100*largo/100*cantidad);
-
-----------------------------------------
--- FUNCION fn_peso_individual
-----------------------------------------
-
--- Función para calcular el peso por producto en cada pedido. (= peso individual x cantidad)
-
-CREATE FUNCTION `fn_peso_individual` (peso FLOAT,cantidad INT) RETURNS FLOAT
-NO SQL
-RETURN (peso*cantidad);
-
-----------------------------------------
+-- --------------------------------------
 -- SP sp_borrar_pedido
-----------------------------------------
+-- --------------------------------------
 
 -- SP que permite que un cliente borre un pedido completo. Se utiliza el control de errores mostrado en clase como ejemplo.
 -- Como hay integridad de datos entre las tablas PEDIDO y DETALLE_PEDIDOS, al borrar un pedido se borran los registros correspondientes en la tabla detalle de pedidos
@@ -106,9 +77,16 @@ IF (IDcliente = 0 OR IDpedido = 0) THEN
 	END IF;
 END $$
 
+-- --------------------------------------
+-- SP sp_aprobar_pedido
+-- --------------------------------------
+
+-- SP que modifica el estado del pedido, pasandolo a aprobado y dando de baja las cantidades de stock de cada producto segun la orden de pedidos del cliente. Luego de la modificacion se agrega un registro a la tabla MODIFICACION_ESTADOS.
+-- Los parámetros de entrada son los id de empleado y pedido.
+
 DROP PROCEDURE IF EXISTS sp_aprobar_pedido;
 DELIMITER $$
-CREATE PROCEDURE `sp_aprobar_pedido` (IN idpedido INT)
+CREATE PROCEDURE `sp_aprobar_pedido` (IN idpedido INT, IN idempleado INT)
 BEGIN
 DECLARE i INT;
 DECLARE n INT;
@@ -116,6 +94,7 @@ set @IDpedido = idpedido;
 set @EstadoPedido = (SELECT fk_id_estado FROM PEDIDOS WHERE id_pedido = @IDpedido);
 IF (@EstadoPedido != "APR") THEN 
 UPDATE PEDIDOS SET fk_id_estado = "APR" WHERE id_pedido = @IDpedido;
+INSERT INTO MODIFICAR_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES (idpedido,idempleado,CURRENT_TIMESTAMP(),"APR", @estadoAnterior);
 DROP TABLE IF EXISTS stock_temporal;
 CREATE TABLE stock_temporal (SELECT fk_id_producto AS IDproducto, cantidad FROM DETALLE_PEDIDOS WHERE fk_id_pedido = @IDpedido);
 SET n = (SELECT COUNT(*) FROM stock_temporal);
@@ -126,7 +105,6 @@ UPDATE PRODUCTOS
 SET stock = stock - (SELECT cantidad FROM stock_temporal LIMIT i,1) 
 WHERE id_producto = @id_pedido_i;
 SET i = i + 1;
-
 END WHILE;
 DROP TABLE stock_temporal;
 ELSE
@@ -134,6 +112,12 @@ SET @msj = "El pedido ya estaba aprobado";
 SELECT @msj;
 END IF;
 END $$
+
+-- --------------------------------------
+-- TRIGGER tr_verificar_stock
+-- --------------------------------------
+
+-- Este trigger es disparado justo antes de agregar un pedido a la tabla DETALLE_PEDIDOS. Para cada producto, verifica que la cantidad solicitada sea menor o igual a las existencias en stock. Si se solicitan más productos de los que hay en stock, en el pedido sólo se carga lo que hay en stock.
 
 DELIMITER $$
 CREATE TRIGGER `tr_verificar_stock`
@@ -144,7 +128,19 @@ SET @msj = '';
 SET @stock_existente = (SELECT stock FROM PRODUCTOS WHERE id_producto = NEW.fk_id_producto);
 IF NEW.cantidad > @stock_existente THEN
 SET NEW.cantidad = @stock_existente;
-SET @msj=CONCAT("La cantidad requerida del producto con id ",NEW.fk_id_producto," es mayor que la existene en el stock. El pedido se cargará sólo con el stock existente"); ELSE
-SET @msj=CONCAT("El producto con id ",NEW.fk_id_producto," se ha cargado en el pedido con la cantidad solicitada");
+SET @msj=CONCAT(@msj," La cantidad requerida del producto con id ",NEW.fk_id_producto," es mayor que la existente en el stock. El pedido se cargará sólo con el stock existente"); ELSE
+SET @msj=CONCAT(@msj," El producto con id ",NEW.fk_id_producto," se ha cargado en el pedido con la cantidad solicitada");
 END IF;
 END$$
+
+-- --------------------------------------
+-- TRIGGER tr_auditar_estados
+-- --------------------------------------
+
+-- Para obtener el valor del estado anterior en el pedido, y asi poder guardarlo en la tabla MODIFICACION_ESTADOS, que es como una auditoria de los estados por los que pasa un pedido.
+
+CREATE TRIGGER `tr_auditar_estados`
+AFTER UPDATE ON PEDIDOS
+FOR EACH ROW
+SET @estadoAnterior = OLD.fk_id_estado;
+

@@ -1,7 +1,7 @@
 -- Created by Amneweb
-CREATE SCHEMA `windward` DEFAULT CHARACTER SET utf8 COLLATE utf8_spanish_ci ;
+CREATE SCHEMA `windward2` DEFAULT CHARACTER SET utf8 COLLATE utf8_spanish_ci ;
 
-USE windward;
+USE windward2;
 -- tables
 
 -- Table: ZONA
@@ -143,6 +143,12 @@ CREATE TABLE MODIFICACION_ESTADOS (
     FOREIGN KEY (fk_id_estado) REFERENCES ESTADOS (codigo)
 );
 
+ALTER TABLE MODIFICACION_ESTADOS 
+ADD fk_id_estado_anterior varchar(3) NOT NULL,
+ADD CONSTRAINT modificacion_estados_ibfk_4
+FOREIGN KEY (fk_id_estado_anterior)
+REFERENCES ESTADOS (codigo);
+
 -- Table: REPARTOS
 CREATE TABLE REPARTOS (
     id_reparto int NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -155,7 +161,7 @@ CREATE TABLE REPARTOS (
     FOREIGN KEY (fk_id_vehiculo) REFERENCES VEHICULOS (id_vehiculo)
 );
 
--- Create constraint entre pedidos y detalle de pedidos para borrar en cascada. Primero miramos los nombres de las claves constraint.
+-- Crea constraint entre pedidos y detalle de pedidos para borrar en cascada. Primero miramos los nombres de las claves constraint.
 SHOW CREATE TABLE PEDIDOS;
 SHOW CREATE TABLE DETALLE_PEDIDOS;
 

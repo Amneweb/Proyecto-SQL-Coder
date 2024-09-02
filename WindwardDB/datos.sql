@@ -15,6 +15,10 @@ INSERT INTO PRODUCTOS (sku, nombre, descripcion, marca, dimension_longitud, dime
 	('FW90', 'Edna 12x75 FW90 Linea Premium', 'Batería de 12x75 amperes, calcio-plata, marca Edna, fabricada en Argentina', 'EDNA', 185, 140, 190, 18, 10),
 	('FW70', 'Edna 12x65 FW70', 'Edna 12x65 FW70, especial para autos nafteros, Edna línea Premium', 'EDNA', 185, 135, 180, 14, 4),
 	('FW100', 'Edna 12x100 FW100 Bora', 'Edna 12x65 FW70, especial para autos nafteros, Edna línea Premium', 'EDNA', 200, 150, 190, 23, 20);
+INSERT INTO PRODUCTOS (sku, nombre, descripcion, marca, dimension_longitud, dimension_ancho, dimension_alto, dimension_peso, stock) VALUES
+	('CL65PB', 'Clorex 12x75 FW90 Linea Premium', 'Batería de 12x75 amperes, calcio-plata, marca Edna, fabricada en Argentina', 'CLOREX', 185, 140, 190, 18, 40),
+	('CL65PBS', 'Edna 12x65 FW70', 'Edna 12x65 FW70, especial para autos nafteros, Edna línea Premium', 'CLOREX', 185, 135, 180, 14, 45),
+	('CL16019', 'Clorex 19 placas para colectivos', 'Edna 12x65 FW70, especial para autos nafteros, Edna línea Premium', 'CLOREX', 200, 150, 190, 23, 28);
 
 INSERT INTO EMPLEADOS (nombre,fk_tipo_documento,nro_documento,telefono,fk_rol)VALUES("Mario Daniel","DNI","40000000","116666666",3), ("Mario Guillermo","DNI","40000001","116666666",3),("Mario Ramirez","DNI","40000002","116666666",3);
 
@@ -31,16 +35,20 @@ INSERT INTO CLIENTES (razon_social,sobrenombre,fk_tipo_documento,nro_documento,d
 INSERT INTO PRECIOS_PRODUCTO (fk_id_producto,fk_id_lista,precio) VALUES 
 (1,1,15000),(1,2,20000),(1,3,12000),
 (2,1,12000),(2,2,15000),(2,3,10000),
-(3,1,25000),(3,2,30000),(3,3,22000);
+(3,1,25000),(3,2,30000),(3,3,22000),
+(4,1,25000),(4,2,30000),(4,3,22000),
+(5,1,30000),(5,2,39000),(5,3,25000),
+(5,1,220000),(6,2,300000),(6,3,245000);
+
 
 INSERT INTO PEDIDOS (fk_id_cliente, fk_id_estado, fecha_pedido, fecha_entrega, fecha_efectiva_entrega)
-VALUES (11, "HEC", '2024-08-31','2024-08-31',NULL),
-(10, "HEC", '2024-08-31','2024-08-31',NULL),
-(16, "HEC", '2024-08-31','2024-08-31',NULL),
-(14, "HEC", '2024-08-31','2024-08-31',NULL);
+VALUES (1, "HEC", '2024-08-31','2024-08-31',NULL),
+(5, "HEC", '2024-08-31','2024-08-31',NULL),
+(7, "HEC", '2024-08-31','2024-08-31',NULL),
+(8, "HEC", '2024-08-31','2024-08-31',NULL);
 
 INSERT INTO DETALLE_PEDIDOS (fk_id_pedido,fk_id_producto,cantidad)
-VALUES (10,1,10),(10,2,5),(10,5,2),(11,2,3),(12,4,15),(12,2,5),(12,1,21),(13,2,20),(13,1,1);
+VALUES (1,1,10),(1,2,5),(1,5,2),(2,2,3),(3,4,15),(3,2,5),(3,1,21),(4,2,20),(4,1,1);
 
 INSERT INTO ESTADOS VALUES ("SBY","Stand By, en espera de stock o lugar");
 

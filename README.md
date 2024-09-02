@@ -49,30 +49,39 @@ La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf
 
 # Esquema básico de prueba para la segunda entrega
 
-Para probar lo hecho hasta ahora primero se deberá correr el archivo index.sql, que genera el schema, los objetos y carga los datos. (Se pueden también hacer correr los archivos por separado, en el orden que sigue: schema, datos, procedures, views.)
-En cada archivo sql y antes de la definición de cada objeto, se puede ver la descripción de cada uno y las tablas que involucra.
-### MANEJO DE ERRORES 
-Importante: NO todos los procesos y funciones tienen programado un manejo de errores, por lo que si se prueban los procesos con claves incorrectas o datos no válidos, podría haber errores, no por el proceso sino por los datos de entrada.
+Para probar lo hecho hasta ahora primero se deberán correr los archivos sql en la carpeta WindwardDB en el siguiente orden:
+- schema.sql - contiene la generación de tablas
+- datos.sql - carga los datos en las tablas
+- procedures.sql - contiene los triggers, funciones y stored procedures
+- functions.sql - contiene las funciones
+- views.sql - contiene las vistas
 
-Una vez cargadas las vistas, funciones, triggers y stored procedures, se puede imitar el camino que seguría un cliente una vez que ingresa a la aplicación:
+También se puede correr el archivo index.sql, que contiene todos los procesos de cada uno de los archivos anteriores y se corre una sola vez.
+
+En cada archivo sql y antes de la definición de cada objeto o proceso, se puede ver la descripción de cada uno y las tablas que involucra.
+### MANEJO DE ERRORES 
+Importante: NO todos los procesos y funciones tienen programado un manejo de errores, por lo que si se prueban los procesos con claves incorrectas o datos no válidos, podría haber errores, no por el proceso en sí, sino por los datos de entrada.
+
+A continuación se dan líneas de código para probar cada uno de los procesos, funciones y vistas que utilizaría un cliente o un administrador.
+
 > [!NOTE]
-> En los snippets de código que siguen, primero se deberá verificar que existan un cliente con id=15 y otro con id=14, porque los id se autogeneran. En mi caso, tengo los id usados, pero por favor verificar antes para que no den error.
+> En los snippets de código que siguen, primero se deberá verificar que existan los clientes con los id definidos en el snippets, porque los id se autogeneran. En mi caso, tengo los id usados, pero por favor verificar antes para que no den error.
 
 1) Ver todos los productos que puede comprar con sus respectivos precios, en base a la lista de precios del cliente. Para esto se utiliza la vista **productos_con_precio**
 
 ```
-SET @cliente = 14;
-SELECT * FROM productos_con_precios WHERE lista = generar_variable_lista(@cliente);
+SET @cliente = 2;
+SELECT * FROM productos_con_precios WHERE lista = fn_generar_variable_lista(@cliente);
 ```
 
 2) Una vez elegidos los productos, el cliente enviará el formulario de compra con todos los datos de los productos y cantidades. Eso disparará el stored procedure **sp_generar_pedido**
 
 ```
-CALL sp_generar_pedidos (15,'[{"producto":1,"cantidad":2},{"producto":2,"cantidad":10}]');
+CALL sp_generar_pedidos (3,'[{"producto":1,"cantidad":2},{"producto":2,"cantidad":10}]');
 SELECT * FROM windward.pedidos_detallados;
 ```
 
-El SP de generar pedidos inserta los registros en la tabla detalle de pedidos, pero ANTES dispara un trigger sp_verificar_stock, adjuntado a la tabla DETALLE_PEDIDOS, que verifica las cantidades en stock. Si hay menos productos de los que se piden, al pedido sólo se le suma la cantidad de stock existente.
+El SP de generar pedidos inserta los registros en la tabla detalle de pedidos, pero ANTES dispara un trigger **tr_verificar_stock**, adjuntado a la tabla DETALLE_PEDIDOS, que verifica las cantidades en stock. Si hay menos productos de los que se piden, al pedido sólo se le suma la cantidad de stock existente.
 
 3) Se puede ver el pedido con el detalle de productos y cantidades usando la vista **pedidos_detallados**
 
@@ -80,7 +89,7 @@ El SP de generar pedidos inserta los registros en la tabla detalle de pedidos, p
 SET @cliente = 15;
 SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 ```
-4) En cuanto el encargado de depósito o la administración verifican las existencias de stock, pasan el estado de un pedido a APROBADO. En ese momento se dan debaja las unidades del stock que forman parte del pedido (este proceso se podría hacer cuando el cliente arma su pedido, para que un cliente que compra después vea el stock real, pero son decisiones de la lógica de cada negocio, que habría que evaluar en cada situación. En este caso el propósito del trabajo práctico es programar un stored procedure, y decidí hacerlo cuando se aprueba el pedido.)
+4) En cuanto el encargado de depósito o la administración verifican las existencias de stock, pasan el estado de un pedido a APROBADO, llamando al proceso **sp_aprobar_pedido**. En ese momento se dan de baja del stock las cantidades reservadas por los clientes (este proceso se podría hacer cuando el cliente arma su pedido, para que un cliente que compra después vea el stock real, pero son decisiones de la lógica de cada negocio, que habría que evaluar en cada situación. En este caso el propósito del trabajo práctico es programar un stored procedure, y decidí hacerlo cuando se aprueba el pedido.)
 ```
 CALL sp_aprobar_pedido (14)
 ```
