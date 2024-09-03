@@ -56,40 +56,9 @@ Para probar lo hecho hasta ahora primero se deberán correr los archivos sql en 
 - functions.sql - contiene las funciones
 - views.sql - contiene las vistas
 
-También se puede correr el archivo index.sql, que contiene todos los procesos de cada uno de los archivos anteriores y se corre una sola vez.
 
 En cada archivo sql y antes de la definición de cada objeto o proceso, se puede ver la descripción de cada uno y las tablas que involucra.
 ### MANEJO DE ERRORES 
 Importante: NO todos los procesos y funciones tienen programado un manejo de errores, por lo que si se prueban los procesos con claves incorrectas o datos no válidos, podría haber errores, no por el proceso en sí, sino por los datos de entrada.
 
-A continuación se dan líneas de código para probar cada uno de los procesos, funciones y vistas que utilizaría un cliente o un administrador.
-
-> [!NOTE]
-> En los snippets de código que siguen, primero se deberá verificar que existan los clientes con los id definidos en el snippets, porque los id se autogeneran. En mi caso, tengo los id usados, pero por favor verificar antes para que no den error.
-
-1) Ver todos los productos que puede comprar con sus respectivos precios, en base a la lista de precios del cliente. Para esto se utiliza la vista **productos_con_precio**
-
-```
-SET @cliente = 2;
-SELECT * FROM productos_con_precios WHERE lista = fn_generar_variable_lista(@cliente);
-```
-
-2) Una vez elegidos los productos, el cliente enviará el formulario de compra con todos los datos de los productos y cantidades. Eso disparará el stored procedure **sp_generar_pedido**
-
-```
-CALL sp_generar_pedidos (3,'[{"producto":1,"cantidad":2},{"producto":2,"cantidad":10}]');
-SELECT * FROM windward.pedidos_detallados;
-```
-
-El SP de generar pedidos inserta los registros en la tabla detalle de pedidos, pero ANTES dispara un trigger **tr_verificar_stock**, adjuntado a la tabla DETALLE_PEDIDOS, que verifica las cantidades en stock. Si hay menos productos de los que se piden, al pedido sólo se le suma la cantidad de stock existente.
-
-3) Se puede ver el pedido con el detalle de productos y cantidades usando la vista **pedidos_detallados**
-
-```
-SET @cliente = 15;
-SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
-```
-4) En cuanto el encargado de depósito o la administración verifican las existencias de stock, pasan el estado de un pedido a APROBADO, llamando al proceso **sp_aprobar_pedido**. En ese momento se dan de baja del stock las cantidades reservadas por los clientes (este proceso se podría hacer cuando el cliente arma su pedido, para que un cliente que compra después vea el stock real, pero son decisiones de la lógica de cada negocio, que habría que evaluar en cada situación. En este caso el propósito del trabajo práctico es programar un stored procedure, y decidí hacerlo cuando se aprueba el pedido.)
-```
-CALL sp_aprobar_pedido (14)
-```
+El archivo snippets.sql hay algunas lineas de codigo que ejecutan las vistas y procesos (se pueden usar de ejemplo con otros datos)

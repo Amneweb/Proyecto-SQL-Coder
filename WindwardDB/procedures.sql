@@ -94,7 +94,7 @@ set @IDpedido = idpedido;
 set @EstadoPedido = (SELECT fk_id_estado FROM PEDIDOS WHERE id_pedido = @IDpedido);
 IF (@EstadoPedido != "APR") THEN 
 UPDATE PEDIDOS SET fk_id_estado = "APR" WHERE id_pedido = @IDpedido;
-INSERT INTO MODIFICAR_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES (idpedido,idempleado,CURRENT_TIMESTAMP(),"APR", @estadoAnterior);
+INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES (idpedido,idempleado,CURRENT_TIMESTAMP(),"APR", @estadoAnterior);
 DROP TABLE IF EXISTS stock_temporal;
 CREATE TABLE stock_temporal (SELECT fk_id_producto AS IDproducto, cantidad FROM DETALLE_PEDIDOS WHERE fk_id_pedido = @IDpedido);
 SET n = (SELECT COUNT(*) FROM stock_temporal);
@@ -128,8 +128,7 @@ SET @msj = '';
 SET @stock_existente = (SELECT stock FROM PRODUCTOS WHERE id_producto = NEW.fk_id_producto);
 IF NEW.cantidad > @stock_existente THEN
 SET NEW.cantidad = @stock_existente;
-SET @msj=CONCAT(@msj," La cantidad requerida del producto con id ",NEW.fk_id_producto," es mayor que la existente en el stock. El pedido se cargará sólo con el stock existente"); ELSE
-SET @msj=CONCAT(@msj," El producto con id ",NEW.fk_id_producto," se ha cargado en el pedido con la cantidad solicitada");
+SET @msj="Las cantidades solicitadas de uno o varios de los productos es mayor al stock disponible. En esos casos el pedido se armo con el stock existente"; 
 END IF;
 END$$
 

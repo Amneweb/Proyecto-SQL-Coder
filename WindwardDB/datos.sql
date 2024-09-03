@@ -38,7 +38,7 @@ INSERT INTO PRECIOS_PRODUCTO (fk_id_producto,fk_id_lista,precio) VALUES
 (3,1,25000),(3,2,30000),(3,3,22000),
 (4,1,25000),(4,2,30000),(4,3,22000),
 (5,1,30000),(5,2,39000),(5,3,25000),
-(5,1,220000),(6,2,300000),(6,3,245000);
+(6,1,220000),(6,2,300000),(6,3,245000);
 
 
 INSERT INTO PEDIDOS (fk_id_cliente, fk_id_estado, fecha_pedido, fecha_entrega, fecha_efectiva_entrega)
