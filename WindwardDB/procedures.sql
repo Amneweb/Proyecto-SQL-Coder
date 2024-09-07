@@ -143,3 +143,26 @@ AFTER UPDATE ON PEDIDOS
 FOR EACH ROW
 SET @estadoAnterior = OLD.fk_id_estado;
 
+-- --------------------------------------
+-- SP sp_pivot_listas
+-- --------------------------------------
+
+-- SP que genera una vista de los productos con sus precios, trasponiendo la vista productos_con_precios dinámicamente.
+
+DROP PROCEDURE IF EXISTS sp_pivot_listas;
+DELIMITER $$
+CREATE PROCEDURE `sp_pivot_listas`()
+BEGIN
+SET @sql = NULL;
+SELECT GROUP_CONCAT(DISTINCT
+           'MAX(CASE WHEN lista = "', lista, '" THEN precio END) AS "Lista_', lista, '"')
+INTO @sql
+FROM (SELECT pro.sku as 'sku', pro.nombre as 'nombre', pro.stock as 'stock', pre.precio as 'precio', pre.fk_id_lista as 'lista' FROM PRODUCTOS pro INNER JOIN PRECIOS_PRODUCTO pre ON pro.id_producto = pre.fk_id_producto ORDER BY pro.nombre) as productos_con_precio;
+
+SET @sql = CONCAT('SELECT sku, nombre, ', @sql, ' FROM (SELECT pro.sku as "sku", pro.nombre as "nombre", pro.stock as "stock", pre.precio as "precio", pre.fk_id_lista as "lista" FROM PRODUCTOS pro INNER JOIN PRECIOS_PRODUCTO pre ON pro.id_producto = pre.fk_id_producto ORDER BY pro.nombre) as productos_con_precio
+GROUP BY sku;');
+
+PREPARE sentencia FROM @sql;
+EXECUTE sentencia;
+DEALLOCATE PREPARE sentencia;
+END $$

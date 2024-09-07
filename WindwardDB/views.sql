@@ -42,7 +42,7 @@ SELECT * FROM productos_con_precios WHERE lista = fn_generar_variable_lista(@cli
 -- ----------------------------------------
 
 -- La siguiente vista es igual a la anterior pero cada lista de precios pasa a ser una columna y no se repiten filas.
--- NOTA: el select que traspone la tabla es un poco "trucho" porque si en el futuro alguien quiere agregar una nueva lista, debería modificar también este select. Hay que mejorarlo.
+-- NOTA: el select que sigue, que traspone la tabla, es un poco "trucho" porque si en el futuro alguien quiere agregar una nueva lista, debería modificar también este select. Hay que mejorarlo. Para hacer eso, se usa el SP sp_pivot_listas 
 
 CREATE OR REPLACE VIEW pivot_productos_con_precios AS
 (SELECT sku, nombre,
@@ -53,6 +53,7 @@ FROM (SELECT pro.sku as 'sku', pro.nombre as 'nombre', pro.stock as 'stock', pre
 GROUP BY sku);
 
 SELECT * FROM pivot_productos_con_precios;
+
 
 -- ----------------------------------------
 -- VISTA dimensiones
