@@ -193,6 +193,7 @@ END $$
 -- ----------------------------------
 -- Para modificar un pedido existente. La modificacion de cantidad se hace producto por producto, lo mismo que el borrado de un producto.
 
+DROP PROCEDURE IF EXISTS sp_modificar_pedido;
 DELIMITER $$
 CREATE PROCEDURE `sp_modificar_pedido` (IN IDcliente INT, IN IDpedido INT, IN qty INT, IN IDproducto INT, IN tipo_modificacion VARCHAR (10))
 BEGIN
@@ -221,11 +222,15 @@ ELSE
 		SELECT @err;
 	ELSE
 		IF (tipo_modificacion = "UPDATE") THEN
-			UPDATE DETALLE_PEDIDOS SET cantidad = qty WHERE id_pedido = IDpedido AND id_producto = IDproducto;
+			UPDATE DETALLE_PEDIDOS SET cantidad = qty WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto;
 			SELECT @msj;
 			ELSE
-			INSERT INTO DETALLE_PEDIDOS (fk_id_pedido,fk_id_producto,cantidad) VALUES (IDpedido,IDproducto,qty);
-			SELECT @msj;
+				IF NOT EXISTS (SELECT fk_id_producto FROM DETALLE_PEDIDOS WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto) THEN 
+				INSERT INTO DETALLE_PEDIDOS (fk_id_pedido,fk_id_producto,cantidad) VALUES (IDpedido,IDproducto,qty);
+				ELSE
+				SET @msj = "El producto ya está en el pedido. Para modificar la cantidad, hacerlo desde la vista del pedido";
+				END IF;
+				SELECT @msj;
 		END IF;
 	END IF;
 END IF;

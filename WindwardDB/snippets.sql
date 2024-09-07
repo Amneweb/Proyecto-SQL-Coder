@@ -1,60 +1,157 @@
--- Ver productos con precios (a cada cliente le muestra los precios según su lista)
+-- **************************************************
+-- PROCESOS PARA UN CLIENTE
+-- **************************************************
+
+-- ------------------------------------------------------------
+-- Ver productos con precios 
+-- ------------------------------------------------------------
+-- (a cada cliente le muestra los precios según su lista)
 
 SET @cliente = 2;
 SELECT * FROM productos_con_precios WHERE lista = fn_generar_variable_lista(@cliente);
 
--- Hacer un pedido. El primer argumento del procedure es el id del cliente y el segundo es el json producto-cantidad. Conviene primero ver la tabla pedidos para despues poder comparar.
+-- ------------------------------------------------------------
+-- Hacer un pedido
+-- ------------------------------------------------------------
+
+-- 1) Vemos la tabla detalle de pedidos para después comparar
+
+SELECT * FROM DETALLE_PEDIDOS;
+
+-- 2) Hacemos correr el procedure
+-- Argumentos (IDcliente, JSON con pedido {IDproducto, cantidad})
 
 CALL sp_generar_pedidos (3,'[{"producto":1,"cantidad":2},{"producto":2,"cantidad":10},{"producto":4,"cantidad":3}]');
 
--- Ver el pedido recien creado 
+-- 3) Ver el pedido recien creado 
 
 SET @cliente = 3;
 SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 
+-- 4) Volvemos a ver la tabla detalle de pedidos, ahora actualizada con el pedido nuevo
+SELECT * FROM DETALLE_PEDIDOS;
+
+-- ---------------------------------------------------------------------------------
 -- Hacer un pedido en que la cantidad de uno de los productos es mayor que el stock
+-- ---------------------------------------------------------------------------------
+-- 1) Vemos el stock de los productos
 
-CALL sp_generar_pedidos (2,'[{"producto":5,"cantidad":40}]');
+SELECT id_producto, nombre, stock FROM PRODUCTOS;
 
--- Ver el pedido recien generado 
+-- 2) Hacemos correr el procedure de generar pedidos
+-- Argumentos (IDcliente, JSONpedido)
 
-SET @cliente = 2;
-SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
+CALL sp_generar_pedidos (2,'[{"producto":5,"cantidad":100}]');
 
--- Ver pedidos con el detalle de la orden de compra de todos los clientes
-
-SELECT * FROM pedidos_detallados;
-
--- Ver pedidos con el detalle de la orden de compra de un cliente en particular
+-- Ver el pedido recien generado. El pedido del producto 5 debería tener como máximo la cantidad de productos en stock
 
 SET @cliente = 2;
 SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 
--- Lista de productos con los precios de cada lista de precios
+-- Volvemos a ver el stock de los productos, que aun no cambió a pesar de los pedidos, porque recién se modifica cuando el pedido pasa a estado aprobado. (Ver más abajo el código correspondiente a este proceso - linea 94) 
 
-SELECT * FROM pivot_productos_con_precios;
+SELECT id_producto, nombre, stock FROM PRODUCTOS;
 
--- Totales de volumen, peso y cantidad de los pedidos del dia 2024-08-31, agrupados por zona
+-- ------------------------------------------------------------
+-- Modificar pedido 4, cambiando la cantidad del producto 1.
+-- ------------------------------------------------------------
+-- 1) Vemos el detalle del pedido actual
 
-SELECT * FROM totales_por_fecha;
+SET @cliente = 8;
+SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 
--- Aprobar un pedido (y dar de baja del stock los productos involucrados). En este caso conviene primero ver la tabla productos para ver el stock de los mismos y comparar el stock despues de correr el procedimiento para aprobar pedido
+-- 2) Hacemos correr el procedure.
+-- Argumentos (IDcliente, IDpedido, qty,IDproducto, tipo_modificacion)
+
+CALL sp_modificar_pedido (8,4,3,2,"UPDATE");
+
+-- 3) Ver cambios en detalle de pedido
+
+SET @cliente = 8;
+SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
+
+-- ------------------------------------------------------------
+-- Modificar pedido 4, agregando un producto nuevo
+-- ------------------------------------------------------------
+
+-- 1) Hacemos correr el procedure
+-- Argumentos (IDcliente, IDpedido, qty,IDproducto, tipo_modificacion)
+-- 1.a) Probamos con un producto que ya existe en el pedido
+
+CALL sp_modificar_pedido (8,4,1,2,"ADD");
+
+-- 1.b) Ahora agregamos un producto que no estaba en el pedido
+
+CALL sp_modificar_pedido (8,4,1,3,"ADD");
+
+-- 2) Vemos nuevamente el detalle del pedido
+
+SET @cliente = 8;
+SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
+
+
+-- ------------------------------------------------------------
+-- Borrar pedido 4 completo
+-- ------------------------------------------------------------
+-- Argumentos (IDcliente, IDpedido)
+
+CALL sp_borrar_pedido (8,4);
+
+-- Verificamos que no existe el pedido en la tabla PEDIDOS ni en la tabla DETALLE_PEDIDOS
+SELECT * FROM PEDIDOS;
+SELECT * FROM DETALLE_PEDIDOS;
+
+
+-- **************************************************
+-- PROCESOS PARA EL ADMIN DE LA EMPRESA
+-- **************************************************
+
+-- ---------------------------------------------------------------------------------
+-- Aprobar el pedido con id 5 (y dar de baja del stock los productos involucrados). 
+-- ---------------------------------------------------------------------------------
+-- 1) Vemos el detalle del pedido 5
+
+SELECT * FROM DETALLE_PEDIDOS WHERE fk_id_pedido = 5;
+
+-- 2) Corremos el proceso para aprobar el pedido 5
+-- Argumentos (IDpedido, IDempleado)
 
 CALL sp_aprobar_pedido (5,2);
 
--- Ver productos y precios por lista
+-- 3) Volvemos a ver el stock de los productos
 
-CALL sp_pivot_listas ();
+SELECT id_producto, nombre, stock FROM PRODUCTOS;
 
--- Insertar una 4ta lista, para ver como funciona el procedure sp_pivot_listas
+-- -----------------------------------------------------------------------
+-- Ver pedidos con el detalle de la orden de compra de todos los clientes
+-- -----------------------------------------------------------------------
+
+SELECT * FROM pedidos_detallados;
+
+-- ------------------------------------------------------------
+-- Ver productos con los precios para cada lista de precios
+-- ------------------------------------------------------------
+
+CALL sp_pivot_listas();
+
+-- ----------------------------------------------------------------
+-- Agregar nueva lista de precios (y precios para algunos productos)
+-- ----------------------------------------------------------------
 
 INSERT INTO LISTAS (moneda, nombre, descripcion) VALUES ("ARS","100%","Lista sin descuentos");
-
--- Insertar precios para esa nueva lista
 
 INSERT INTO PRECIOS_PRODUCTO (fk_id_producto,fk_id_lista,precio) VALUES 
 (1,4,15000),(2,4,20000),(3,4,12000);
 
 -- Volver a llamar al sp de listas de precio para verificar que se agregó la columna
 
-CALL sp_pivot_listas ();
+CALL sp_pivot_listas();
+
+
+-- -----------------------------------------------------------------------------------------
+-- Totales de volumen, peso y cantidad de los pedidos del dia 2024-08-31, agrupados por zona
+-- -----------------------------------------------------------------------------------------
+
+SELECT * FROM totales_por_fecha;
+
+
