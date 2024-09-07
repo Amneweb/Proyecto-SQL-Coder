@@ -28,6 +28,22 @@ Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una 
 - Los encargados de depósito tendrán acceso al sistema y podrán ver los pedidos realizados y comenzar a armarlos (tal vez se requiera autorización de un gerente de distribución antes de que los encargados de depósito puedan tener el acceso a los pedidos. Eso lo definiré a medida que avance el curso.)
 - El sistema distribuirá los pedidos por días y zonas de entrega y armará la posible logística de entrega
 
+# Esquema básico de prueba para la segunda entrega
+
+Para probar lo hecho hasta ahora primero se deberán correr los archivos sql en la carpeta WindwardDB en el siguiente orden:
+- schema.sql - contiene la generación de tablas
+- datos.sql - carga los datos en las tablas
+- procedures.sql - contiene los triggers, funciones y stored procedures
+- functions.sql - contiene las funciones
+- views.sql - contiene las vistas
+
+
+En cada archivo sql y antes de la definición de cada objeto o proceso, se puede ver la descripción de cada uno y las tablas que involucra.
+### MANEJO DE ERRORES 
+Importante: NO todos los procesos y funciones tienen programado un manejo de errores, por lo que si se prueban los procesos con claves incorrectas o datos no válidos, podría haber errores, no por el proceso en sí, sino por los datos de entrada.
+
+El archivo snippets.sql hay algunas lineas de codigo que ejecutan las vistas y procesos (se pueden usar de ejemplo con otros datos)
+
 # TABLAS
 
 El siguiente enlace lleva a un archivo de google sheets con la definición de las tablas
@@ -45,20 +61,5 @@ La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf
 
 # DIAGRAMA DE TABLAS - REVERSE ENGINEER
 
-![Diagrama de tablas obtenido con la función Reverse Engineer de Workbench](WindwardDB/ReverseEngineer.jpg)
+![Diagrama de tablas obtenido con la función Reverse Engineer de Workbench](ReverseEngineer.jpg)
 
-# Esquema básico de prueba para la segunda entrega
-
-Para probar lo hecho hasta ahora primero se deberán correr los archivos sql en la carpeta WindwardDB en el siguiente orden:
-- schema.sql - contiene la generación de tablas
-- datos.sql - carga los datos en las tablas
-- procedures.sql - contiene los triggers, funciones y stored procedures
-- functions.sql - contiene las funciones
-- views.sql - contiene las vistas
-
-
-En cada archivo sql y antes de la definición de cada objeto o proceso, se puede ver la descripción de cada uno y las tablas que involucra.
-### MANEJO DE ERRORES 
-Importante: NO todos los procesos y funciones tienen programado un manejo de errores, por lo que si se prueban los procesos con claves incorrectas o datos no válidos, podría haber errores, no por el proceso en sí, sino por los datos de entrada.
-
-El archivo snippets.sql hay algunas lineas de codigo que ejecutan las vistas y procesos (se pueden usar de ejemplo con otros datos)
