@@ -94,7 +94,7 @@ set @IDpedido = idpedido;
 set @EstadoPedido = (SELECT fk_id_estado FROM PEDIDOS WHERE id_pedido = @IDpedido);
 IF (@EstadoPedido != "APR") THEN 
 UPDATE PEDIDOS SET fk_id_estado = "APR" WHERE id_pedido = @IDpedido;
-INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES (idpedido,idempleado,CURRENT_TIMESTAMP(),"APR", @estadoAnterior);
+INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES (idpedido,idempleado,CURRENT_TIMESTAMP(),"APR", @EstadoPedido);
 DROP TABLE IF EXISTS stock_temporal;
 CREATE TABLE stock_temporal (SELECT fk_id_producto AS IDproducto, cantidad FROM DETALLE_PEDIDOS WHERE fk_id_pedido = @IDpedido);
 SET n = (SELECT COUNT(*) FROM stock_temporal);
@@ -114,14 +114,35 @@ END IF;
 END $$
 
 -- --------------------------------------
--- TRIGGER tr_verificar_stock
+-- TRIGGERS tr_verificar_stock
 -- --------------------------------------
 
 -- Este trigger es disparado justo antes de agregar un pedido a la tabla DETALLE_PEDIDOS. Para cada producto, verifica que la cantidad solicitada sea menor o igual a las existencias en stock. Si se solicitan más productos de los que hay en stock, en el pedido sólo se carga lo que hay en stock.
 
+DROP TRIGGER IF EXISTS tr_verificar_stock_on_insert;
 DELIMITER $$
-CREATE TRIGGER `tr_verificar_stock`
+CREATE TRIGGER `tr_verificar_stock_on_insert`
 BEFORE INSERT ON DETALLE_PEDIDOS
+FOR EACH ROW
+BEGIN
+SET @msj = '';
+SET @stock_existente = (SELECT stock FROM PRODUCTOS WHERE id_producto = NEW.fk_id_producto);
+IF NEW.cantidad > @stock_existente THEN
+SET NEW.cantidad = @stock_existente;
+SET @msj="Las cantidades solicitadas de uno o varios de los productos es mayor al stock disponible. En esos casos el pedido se armo con el stock existente"; 
+END IF;
+END$$
+
+-- --------------------------------------
+-- TRIGGERS tr_verificar_stock
+-- --------------------------------------
+
+-- Este trigger es disparado justo antes de agregar un pedido a la tabla DETALLE_PEDIDOS. Para cada producto, verifica que la cantidad solicitada sea menor o igual a las existencias en stock. Si se solicitan más productos de los que hay en stock, en el pedido sólo se carga lo que hay en stock.
+
+DROP TRIGGER IF EXISTS tr_verificar_stock_on_update;
+DELIMITER $$
+CREATE TRIGGER `tr_verificar_stock_on_update`
+BEFORE UPDATE ON DETALLE_PEDIDOS
 FOR EACH ROW
 BEGIN
 SET @msj = '';
@@ -165,4 +186,47 @@ GROUP BY sku;');
 PREPARE sentencia FROM @sql;
 EXECUTE sentencia;
 DEALLOCATE PREPARE sentencia;
+END $$
+
+-- ----------------------------------
+-- SP sp_modificar_pedido
+-- ----------------------------------
+-- Para modificar un pedido existente. La modificacion de cantidad se hace producto por producto, lo mismo que el borrado de un producto.
+
+DELIMITER $$
+CREATE PROCEDURE `sp_modificar_pedido` (IN IDcliente INT, IN IDpedido INT, IN qty INT, IN IDproducto INT, IN tipo_modificacion VARCHAR (10))
+BEGIN
+IF (IDcliente = 0 OR IDpedido = 0) THEN
+	SET @err = 'ni el id del cliente ni el id del pedido deben ser 0';
+	SELECT @err;
+ELSE
+	SET @err = '';
+	IF NOT EXISTS
+		(SELECT id_cliente from CLIENTES WHERE id_cliente = IDcliente) 
+		THEN
+		SET @err = CONCAT('No existe el cliente con ID ', IDcliente);
+	END IF;
+	IF NOT EXISTS
+		(SELECT id_pedido from PEDIDOS WHERE id_pedido = IDpedido) 
+		THEN
+		SET @err = CONCAT('No existe el pedido con ID ', IDpedido);
+	END IF;
+	IF NOT EXISTS
+		(SELECT id_pedido from PEDIDOS WHERE (id_pedido = IDpedido AND fk_id_cliente = IDcliente)) 
+		THEN
+		SET @err = CONCAT('El pedido con id ', IDpedido, ' no corresponde al cliente con id ',IDcliente);
+	END IF;
+	IF @err != '' 
+		THEN
+		SELECT @err;
+	ELSE
+		IF (tipo_modificacion = "UPDATE") THEN
+			UPDATE DETALLE_PEDIDOS SET cantidad = qty WHERE id_pedido = IDpedido AND id_producto = IDproducto;
+			SELECT @msj;
+			ELSE
+			INSERT INTO DETALLE_PEDIDOS (fk_id_pedido,fk_id_producto,cantidad) VALUES (IDpedido,IDproducto,qty);
+			SELECT @msj;
+		END IF;
+	END IF;
+END IF;
 END $$

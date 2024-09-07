@@ -14,7 +14,7 @@ SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 
 -- Hacer un pedido en que la cantidad de uno de los productos es mayor que el stock
 
-CALL sp_generar_pedidos (2,'[{"producto":1,"cantidad":50},{"producto":5,"cantidad":1}]');
+CALL sp_generar_pedidos (2,'[{"producto":5,"cantidad":40}]');
 
 -- Ver el pedido recien generado 
 
@@ -41,3 +41,20 @@ SELECT * FROM totales_por_fecha;
 -- Aprobar un pedido (y dar de baja del stock los productos involucrados). En este caso conviene primero ver la tabla productos para ver el stock de los mismos y comparar el stock despues de correr el procedimiento para aprobar pedido
 
 CALL sp_aprobar_pedido (5,2);
+
+-- Ver productos y precios por lista
+
+CALL sp_pivot_listas ();
+
+-- Insertar una 4ta lista, para ver como funciona el procedure sp_pivot_listas
+
+INSERT INTO LISTAS (moneda, nombre, descripcion) VALUES ("ARS","100%","Lista sin descuentos");
+
+-- Insertar precios para esa nueva lista
+
+INSERT INTO PRECIOS_PRODUCTO (fk_id_producto,fk_id_lista,precio) VALUES 
+(1,4,15000),(2,4,20000),(3,4,12000);
+
+-- Volver a llamar al sp de listas de precio para verificar que se agregó la columna
+
+CALL sp_pivot_listas ();
