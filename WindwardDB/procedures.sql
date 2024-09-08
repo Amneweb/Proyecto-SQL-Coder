@@ -129,7 +129,7 @@ SET @msj = '';
 SET @stock_existente = (SELECT stock FROM PRODUCTOS WHERE id_producto = NEW.fk_id_producto);
 IF NEW.cantidad > @stock_existente THEN
 SET NEW.cantidad = @stock_existente;
-SET @msj="Las cantidades solicitadas de uno o varios de los productos es mayor al stock disponible. En esos casos el pedido se armo con el stock existente"; 
+SET @msj="Las cantidades solicitadas de uno o varios de los productos son mayores al stock disponible. En esos casos el pedido se armo con el stock existente"; 
 END IF;
 END$$
 
@@ -191,47 +191,58 @@ END $$
 -- ----------------------------------
 -- SP sp_modificar_pedido
 -- ----------------------------------
--- Para modificar un pedido existente. La modificacion de cantidad se hace producto por producto, lo mismo que el borrado de un producto.
+-- Para modificar un pedido existente. La modificacion de cantidad se hace producto por producto, lo mismo que el borrado de un producto. Si el producto está en estado aprobado, no se puede modificar.
+-- Tablas/Vistas involucradas: PEDIDOS, CLIENTES, DETALLE_PEDIDOS
 
 DROP PROCEDURE IF EXISTS sp_modificar_pedido;
 DELIMITER $$
 CREATE PROCEDURE `sp_modificar_pedido` (IN IDcliente INT, IN IDpedido INT, IN qty INT, IN IDproducto INT, IN tipo_modificacion VARCHAR (10))
 BEGIN
-IF (IDcliente = 0 OR IDpedido = 0) THEN
-	SET @err = 'ni el id del cliente ni el id del pedido deben ser 0';
-	SELECT @err;
-ELSE
-	SET @err = '';
-	IF NOT EXISTS
-		(SELECT id_cliente from CLIENTES WHERE id_cliente = IDcliente) 
-		THEN
-		SET @err = CONCAT('No existe el cliente con ID ', IDcliente);
-	END IF;
-	IF NOT EXISTS
-		(SELECT id_pedido from PEDIDOS WHERE id_pedido = IDpedido) 
-		THEN
-		SET @err = CONCAT('No existe el pedido con ID ', IDpedido);
-	END IF;
-	IF NOT EXISTS
-		(SELECT id_pedido from PEDIDOS WHERE (id_pedido = IDpedido AND fk_id_cliente = IDcliente)) 
-		THEN
-		SET @err = CONCAT('El pedido con id ', IDpedido, ' no corresponde al cliente con id ',IDcliente);
-	END IF;
-	IF @err != '' 
-		THEN
+IF NOT EXISTS (SELECT id_pedido,fk_id_estado FROM PEDIDOS WHERE id_pedido=IDpedido AND fk_id_estado = "APR") THEN
+	IF (IDcliente = 0 OR IDpedido = 0) THEN
+		SET @err = 'ni el id del cliente ni el id del pedido deben ser 0';
 		SELECT @err;
 	ELSE
-		IF (tipo_modificacion = "UPDATE") THEN
-			UPDATE DETALLE_PEDIDOS SET cantidad = qty WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto;
-			SELECT @msj;
-			ELSE
-				IF NOT EXISTS (SELECT fk_id_producto FROM DETALLE_PEDIDOS WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto) THEN 
-				INSERT INTO DETALLE_PEDIDOS (fk_id_pedido,fk_id_producto,cantidad) VALUES (IDpedido,IDproducto,qty);
-				ELSE
-				SET @msj = "El producto ya está en el pedido. Para modificar la cantidad, hacerlo desde la vista del pedido";
-				END IF;
-				SELECT @msj;
+		SET @err = '';
+		IF NOT EXISTS
+			(SELECT id_cliente from CLIENTES WHERE id_cliente = IDcliente) 
+			THEN
+			SET @err = CONCAT('No existe el cliente con ID ', IDcliente);
 		END IF;
+		IF NOT EXISTS
+			(SELECT id_pedido from PEDIDOS WHERE id_pedido = IDpedido) 
+			THEN
+			SET @err = CONCAT('No existe el pedido con ID ', IDpedido);
+		END IF;
+		IF NOT EXISTS
+			(SELECT id_pedido from PEDIDOS WHERE (id_pedido = IDpedido AND fk_id_cliente = IDcliente)) 
+			THEN
+			SET @err = CONCAT('El pedido con id ', IDpedido, ' no corresponde al cliente con id ',IDcliente);
+		END IF;
+		IF @err != '' 
+			THEN
+			SELECT @err;
+		ELSE
+			CASE
+			WHEN tipo_modificacion = "UPDATE" THEN
+			UPDATE DETALLE_PEDIDOS SET cantidad = qty WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto;
+					SELECT @msj;
+			WHEN tipo_modificacion = "ADD" THEN
+				IF NOT EXISTS (SELECT fk_id_producto FROM DETALLE_PEDIDOS WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto) THEN 
+						INSERT INTO DETALLE_PEDIDOS (fk_id_pedido,fk_id_producto,cantidad) VALUES (IDpedido,IDproducto,qty);
+						SET @msj = "El pedido se modificó con éxito";
+						ELSE
+						SET @msj = "El producto ya está en el pedido. Para modificar la cantidad, hacerlo desde la vista del pedido";
+						END IF;
+						SELECT @msj;
+			WHEN tipo_modificacion = "DELETE" THEN
+				DELETE FROM DETALLE_PEDIDOS WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto;
+				SET @msj = "El producto se borró con éxito del pedido";
+				END CASE;
+            END IF;
 	END IF;
-END IF;
+    ELSE
+    SET @msj = "No se puede modificar un pedido que ya fue aprobado.";
+    END IF;
+	SELECT @msj;
 END $$

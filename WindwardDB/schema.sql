@@ -136,7 +136,7 @@ CREATE TABLE MODIFICACION_ESTADOS (
     id_modificacion int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     fk_id_pedido int NOT NULL,
     fk_id_empleado int NOT NULL,
-    hora_modificacion date NOT NULL default (CURRENT_TIMESTAMP),
+    hora_modificacion datetime NOT NULL default (CURRENT_TIMESTAMP),
     fk_id_estado varchar(3) NOT NULL,
     FOREIGN KEY (fk_id_pedido) REFERENCES PEDIDOS (id_pedido),
     FOREIGN KEY (fk_id_empleado) REFERENCES EMPLEADOS (id_empleado),

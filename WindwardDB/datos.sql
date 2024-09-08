@@ -42,7 +42,7 @@ INSERT INTO PRECIOS_PRODUCTO (fk_id_producto,fk_id_lista,precio) VALUES
 
 
 INSERT INTO PEDIDOS (fk_id_cliente, fk_id_estado, fecha_pedido, fecha_entrega, fecha_efectiva_entrega)
-VALUES (1, "HEC", '2024-08-31','2024-08-31',NULL),
+VALUES (1, "APR", '2024-08-31','2024-08-31',NULL),
 (5, "HEC", '2024-08-31','2024-08-31',NULL),
 (7, "HEC", '2024-08-31','2024-08-31',NULL),
 (8, "HEC", '2024-08-31','2024-08-31',NULL);

@@ -53,7 +53,7 @@ SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 SELECT id_producto, nombre, stock FROM PRODUCTOS;
 
 -- ------------------------------------------------------------
--- Modificar pedido 4, cambiando la cantidad del producto 1.
+-- Modificar pedido 4, cambiando la cantidad del producto 2.
 -- ------------------------------------------------------------
 -- 1) Vemos el detalle del pedido actual
 
@@ -89,6 +89,10 @@ CALL sp_modificar_pedido (8,4,1,3,"ADD");
 SET @cliente = 8;
 SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 
+-- 3) Tratamos de modificar un pedido que ya estaba aprobado
+
+CALL sp_modificar_pedido (1,1,3,5,"UPDATE");
+
 
 -- ------------------------------------------------------------
 -- Borrar pedido 4 completo
@@ -102,6 +106,19 @@ SELECT * FROM PEDIDOS;
 SELECT * FROM DETALLE_PEDIDOS;
 
 
+-- -----------------------------------------------------------
+-- Ver pedido con precios para un cliente determinado
+-- -----------------------------------------------------------
+
+SET @cliente = 7;
+SET @fecha_pedido = "2024-08-31";
+SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedido;
+
+-- Total del pedido
+
+SELECT razon_social,SUM(Total_renglon) AS "Total pedido" FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedido GROUP BY id_cliente;
+
+
 -- **************************************************
 -- PROCESOS PARA EL ADMIN DE LA EMPRESA
 -- **************************************************
@@ -109,9 +126,9 @@ SELECT * FROM DETALLE_PEDIDOS;
 -- ---------------------------------------------------------------------------------
 -- Aprobar el pedido con id 5 (y dar de baja del stock los productos involucrados). 
 -- ---------------------------------------------------------------------------------
--- 1) Vemos el detalle del pedido 5
+-- 1) Vemos el detalle del pedido 5, y las cantidades en stock, para comparar
 
-SELECT * FROM DETALLE_PEDIDOS WHERE fk_id_pedido = 5;
+SELECT dp.*, p.stock FROM DETALLE_PEDIDOS dp INNER JOIN PRODUCTOS p ON dp.fk_id_producto = p.id_producto WHERE dp.fk_id_pedido = 5;
 
 -- 2) Corremos el proceso para aprobar el pedido 5
 -- Argumentos (IDpedido, IDempleado)
@@ -120,13 +137,19 @@ CALL sp_aprobar_pedido (5,2);
 
 -- 3) Volvemos a ver el stock de los productos
 
-SELECT id_producto, nombre, stock FROM PRODUCTOS;
+SELECT dp.*, p.stock FROM DETALLE_PEDIDOS dp INNER JOIN PRODUCTOS p ON dp.fk_id_producto = p.id_producto WHERE dp.fk_id_pedido = 5;
 
 -- -----------------------------------------------------------------------
 -- Ver pedidos con el detalle de la orden de compra de todos los clientes
 -- -----------------------------------------------------------------------
 
 SELECT * FROM pedidos_detallados;
+
+-- -----------------------------------------------------------------------
+-- Total de cada pedido para una determinada fecha
+-- -----------------------------------------------------------------------
+
+SELECT id_cliente,razon_social, SUM(Total_renglon) AS "Total pedido" FROM pedido_cliente WHERE fecha = @fecha_pedido GROUP BY id_cliente;
 
 -- ------------------------------------------------------------
 -- Ver productos con los precios para cada lista de precios
@@ -154,4 +177,9 @@ CALL sp_pivot_listas();
 
 SELECT * FROM totales_por_fecha;
 
+-- -----------------------------------------------------------------------------------------
+-- Modificaciones de estado de los pedidos
+-- -----------------------------------------------------------------------------------------
+
+SELECT * FROM MODIFICACION_ESTADOS;
 
