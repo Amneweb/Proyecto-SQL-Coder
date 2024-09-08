@@ -36,13 +36,13 @@ Para probar lo hecho hasta ahora primero se deberán correr los archivos sql en 
 - procedures.sql - contiene los triggers, funciones y stored procedures
 - functions.sql - contiene las funciones
 - views.sql - contiene las vistas
+- *snippets.sql* - con líneas de comando para ir probando todos los procesos, funciones y triggers
 
 
 En cada archivo sql y antes de la definición de cada objeto o proceso, se puede ver la descripción de cada uno y las tablas que involucra.
 ### MANEJO DE ERRORES 
 Importante: NO todos los procesos y funciones tienen programado un manejo de errores, por lo que si se prueban los procesos con claves incorrectas o datos no válidos, podría haber errores, no por el proceso en sí, sino por los datos de entrada.
 
-El archivo snippets.sql hay algunas lineas de codigo que ejecutan las vistas y procesos (se pueden usar de ejemplo con otros datos)
 
 # TABLAS
 
