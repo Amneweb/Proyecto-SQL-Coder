@@ -52,6 +52,13 @@ VALUES (1,1,10),(1,2,5),(1,5,2),(2,2,3),(3,4,15),(3,2,5),(3,1,21),(4,2,20),(4,1,
 
 INSERT INTO ESTADOS VALUES ("SBY","Stand By, en espera de stock o lugar");
 
+INSERT INTO VEHICULOS VALUES 
+(NULL,"ZZZ-111-AA", "Mercedes Benz", "Sprinter Blanca", 2500,2000,200,10),
+(NULL,"ZZZ-222-AA", "Mercedes Benz", "Sprinter Azul", 4500,3000,300,10),
+(NULL,"ZZZ-333-AA", "Iveco", "Iveco", 2500,2000,200,10),
+(NULL,"ZZZ-444-AA", "Renault", "Camion", 7000,5000,500,20);
+
+
 
 
 

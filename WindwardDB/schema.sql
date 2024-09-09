@@ -59,11 +59,12 @@ CREATE TABLE PRODUCTOS (
 
 
 -- Table: VEHICULOS
+DROP TABLE IF EXISTS VEHICULOS;
 CREATE TABLE VEHICULOS (
     id_vehiculo int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     patente varchar(10) UNIQUE NOT NULL,
-    marca varchar(10) NULL,
-    apodo varchar(10) NULL,
+    marca varchar(20) NULL,
+    apodo varchar(20) NULL,
     max_peso int NOT NULL,
     max_volumen DEC (8,2) NOT NULL,
     max_cantidades int NOT NULL,

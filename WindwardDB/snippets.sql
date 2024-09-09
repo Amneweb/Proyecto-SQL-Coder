@@ -178,8 +178,10 @@ CALL sp_pivot_listas();
 SELECT * FROM totales_por_fecha;
 
 -- -----------------------------------------------------------------------------------------
--- Modificaciones de estado de los pedidos
+-- Modificaciones de estado de los pedidos 
 -- -----------------------------------------------------------------------------------------
 
 SELECT * FROM MODIFICACION_ESTADOS;
+
+SELECT zona, fn_seleccionar_vehiculo(max_peso, max_volumen,max_cantidad) AS 'vehiculo' FROM totales_por_fecha ORDER BY max_peso ASC;
 

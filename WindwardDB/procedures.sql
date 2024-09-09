@@ -246,3 +246,4 @@ IF NOT EXISTS (SELECT id_pedido,fk_id_estado FROM PEDIDOS WHERE id_pedido=IDpedi
     END IF;
 	SELECT @msj;
 END $$
+

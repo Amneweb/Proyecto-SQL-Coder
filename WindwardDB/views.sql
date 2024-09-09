@@ -87,4 +87,5 @@ SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedi
 
 SELECT id_cliente,razon_social, SUM(Total_renglon) AS "Total pedido" FROM pedido_cliente WHERE fecha = @fecha_pedido GROUP BY id_cliente;
 
-
+CREATE OR REPLACE VIEW vehiculos_zonas AS 
+(SELECT t.*, v.apodo, v.max_volumen,v.max_cantidades,v.max_peso FROM totales_por_fecha t JOIN VEHICULOS v ORDER BY zona ASC, max_peso ASC);
