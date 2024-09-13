@@ -31,7 +31,7 @@ RETURN (peso*cantidad);
 -- --------------------------------------
 
 DELIMITER $$
-CREATE FUNCTION `fn_seleccionar_vehiculo`(peso FLOAT, volumen FLOAT, cantidad INT) RETURNS int
+CREATE FUNCTION `fn_seleccionar_vehiculo`(fecha DATE, peso FLOAT, volumen FLOAT, cantidad INT) RETURNS int
     READS SQL DATA
 BEGIN
 DECLARE maxVolumen INT DEFAULT 0;

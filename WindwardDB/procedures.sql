@@ -130,6 +130,8 @@ SET @stock_existente = (SELECT stock FROM PRODUCTOS WHERE id_producto = NEW.fk_i
 IF NEW.cantidad > @stock_existente THEN
 SET NEW.cantidad = @stock_existente;
 SET @msj="Las cantidades solicitadas de uno o varios de los productos son mayores al stock disponible. En esos casos el pedido se armo con el stock existente"; 
+ELSE 
+SET @msj="Los productos se agregaron sin problemas.";
 END IF;
 END$$
 
@@ -198,52 +200,93 @@ DROP PROCEDURE IF EXISTS sp_modificar_pedido;
 DELIMITER $$
 CREATE PROCEDURE `sp_modificar_pedido` (IN IDcliente INT, IN IDpedido INT, IN qty INT, IN IDproducto INT, IN tipo_modificacion VARCHAR (10))
 BEGIN
-IF NOT EXISTS (SELECT id_pedido,fk_id_estado FROM PEDIDOS WHERE id_pedido=IDpedido AND fk_id_estado = "APR") THEN
-	IF (IDcliente = 0 OR IDpedido = 0) THEN
-		SET @err = 'ni el id del cliente ni el id del pedido deben ser 0';
-		SELECT @err;
-	ELSE
+IF EXISTS (SELECT id_pedido,fk_id_estado FROM PEDIDOS WHERE id_pedido=IDpedido AND fk_id_estado = "APR") THEN
+    SET @err = "No se puede modificar un pedido que ya fue aprobado.";
+	SELECT @err;
+    ELSE
 		SET @err = '';
-		IF NOT EXISTS
-			(SELECT id_cliente from CLIENTES WHERE id_cliente = IDcliente) 
-			THEN
-			SET @err = CONCAT('No existe el cliente con ID ', IDcliente);
-		END IF;
-		IF NOT EXISTS
-			(SELECT id_pedido from PEDIDOS WHERE id_pedido = IDpedido) 
-			THEN
-			SET @err = CONCAT('No existe el pedido con ID ', IDpedido);
-		END IF;
-		IF NOT EXISTS
-			(SELECT id_pedido from PEDIDOS WHERE (id_pedido = IDpedido AND fk_id_cliente = IDcliente)) 
-			THEN
-			SET @err = CONCAT('El pedido con id ', IDpedido, ' no corresponde al cliente con id ',IDcliente);
-		END IF;
-		IF @err != '' 
-			THEN
+		IF (IDcliente = 0 OR IDpedido = 0 OR IDproducto = 0 OR qty = 0 OR tipo_modificacion ='') THEN
+			SET @err = 'Ni los ID del pedido, cliente y producto, ni la cantidad, ni el código de modificación pueden ser 0 o vacíos, por favor verifique sus datos.';
 			SELECT @err;
 		ELSE
-			CASE
-			WHEN tipo_modificacion = "UPDATE" THEN
-			UPDATE DETALLE_PEDIDOS SET cantidad = qty WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto;
-					SELECT @msj;
-			WHEN tipo_modificacion = "ADD" THEN
-				IF NOT EXISTS (SELECT fk_id_producto FROM DETALLE_PEDIDOS WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto) THEN 
-						INSERT INTO DETALLE_PEDIDOS (fk_id_pedido,fk_id_producto,cantidad) VALUES (IDpedido,IDproducto,qty);
-						SET @msj = "El pedido se modificó con éxito";
-						ELSE
-						SET @msj = "El producto ya está en el pedido. Para modificar la cantidad, hacerlo desde la vista del pedido";
-						END IF;
+			SET @err = '';
+			IF NOT EXISTS
+				(SELECT id_cliente from CLIENTES WHERE id_cliente = IDcliente) 
+				THEN
+				SET @err = CONCAT('No existe el cliente con ID ', IDcliente);
+			END IF;
+			IF NOT EXISTS
+				(SELECT id_producto from PRODUCTOS WHERE id_producto = IDproducto) 
+				THEN
+				SET @err = CONCAT('No existe ningún producto con ID ', IDproducto);
+			END IF;
+			IF NOT EXISTS
+				(SELECT FIND_IN_SET(tipo_modificacion,"ADD,UPDATE,DELETE"))
+				THEN
+				SET @err = CONCAT('El código de modificación ingresado no es un código permitido. El código debe ser ADD, UPDATE o DELETE. Usted ingresó ',tipo_modificacion);
+			END IF;
+			IF NOT EXISTS
+				(SELECT id_pedido from PEDIDOS WHERE (id_pedido = IDpedido AND fk_id_cliente = IDcliente)) 
+				THEN
+				SET @err = CONCAT('El pedido con id ', IDpedido, ' no corresponde al cliente con id ',IDcliente);
+			END IF;
+			IF @err != '' 
+				THEN
+				SELECT @err;
+			ELSE
+				CASE
+				WHEN tipo_modificacion = "UPDATE" THEN
+				UPDATE DETALLE_PEDIDOS SET cantidad = qty WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto;
 						SELECT @msj;
-			WHEN tipo_modificacion = "DELETE" THEN
-				DELETE FROM DETALLE_PEDIDOS WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto;
-				SET @msj = "El producto se borró con éxito del pedido";
-				END CASE;
-            END IF;
+				WHEN tipo_modificacion = "ADD" THEN
+					IF NOT EXISTS (SELECT fk_id_producto FROM DETALLE_PEDIDOS WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto) THEN 
+							INSERT INTO DETALLE_PEDIDOS (fk_id_pedido,fk_id_producto,cantidad) VALUES (IDpedido,IDproducto,qty);
+							SET @msj = "El pedido se modificó con éxito";
+							ELSE
+							SET @msj = "El producto ya está en el pedido. Para modificar la cantidad, ir a 'MODIFICAR PEDIDO'";
+							END IF;
+							SELECT @msj;
+				WHEN tipo_modificacion = "DELETE" THEN
+					DELETE FROM DETALLE_PEDIDOS WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto;
+					SET @msj = "El producto se borró con éxito del pedido";
+                    SELECT @msj;
+					END CASE;
+				END IF;
+		END IF;
 	END IF;
-    ELSE
-    SET @msj = "No se puede modificar un pedido que ya fue aprobado.";
-    END IF;
-	SELECT @msj;
+    SELECT @err;
 END $$
 
+-- ----------------------------------
+-- SP sp_generar_reparto
+-- ----------------------------------
+-- En base a la vista totales
+
+DROP PROCEDURE IF EXISTS sp_generar_reparto;
+DELIMITER $$
+CREATE PROCEDURE `sp_generar_reparto`(IN IDzona INT, IN fecha_elegida DATE)
+BEGIN
+DECLARE var_vehiculo INT;
+DECLARE var_zona INT;
+DECLARE var_fecha DATE;
+
+CALL sp_generar_totales_por_fecha(fecha_elegida)
+
+SELECT fn_seleccionar_vehiculo(fecha_elegida,`peso total`, `volumen total`,`cantidad total`) AS 'vehiculo' FROM totales_por_fecha WHERE zona=IDzona ORDER BY `peso total` ASC INTO var_vehiculo;
+INSERT INTO REPARTOS VALUES (NULL,var_vehiculo,1,NULL,IDzona,fecha_elegida);
+END $$
+
+
+-- ----------------------------------
+-- SP sp_generar_totales_por_fecha
+-- ----------------------------------
+-- SP para generar una tabla (que luego se borra) similar a la vista "totales_por_fecha". Esto lo hice porque no puedo usar variables en las vistas.
+
+
+DROP PROCEDURE IF EXISTS sp_generar_totales_por_fecha;
+DELIMITER $$
+CREATE PROCEDURE `sp_generar_totales_por_fecha` (IN fecha_elegida DATE)
+BEGIN
+DROP TABLE IF EXISTS totales_por_fecha;
+CREATE TABLE totales_por_fecha (SELECT zona, fecha, sum(volumen) AS 'volumen total', sum(peso_total) AS 'peso total', sum(qty) AS 'cantidad total' FROM dimensiones WHERE fecha=fecha_elegida GROUP BY zona);
+END $$

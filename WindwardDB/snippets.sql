@@ -93,6 +93,14 @@ SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 
 CALL sp_modificar_pedido (1,1,3,5,"UPDATE");
 
+-- 4) Tratamos de modificar un pedido enviando datos incorrectos
+-- 4.a) código de modificación incorrecto
+
+CALL sp_modificar_pedido (1,2,3,5,"MODIFICAR");
+
+-- 4.b) algún valor = 0
+
+CALL sp_modificar_pedido (1,2,0,5,"UPDATE");
 
 -- ------------------------------------------------------------
 -- Borrar pedido 4 completo
@@ -183,5 +191,12 @@ SELECT * FROM totales_por_fecha;
 
 SELECT * FROM MODIFICACION_ESTADOS;
 
-SELECT zona, fn_seleccionar_vehiculo(max_peso, max_volumen,max_cantidad) AS 'vehiculo' FROM totales_por_fecha ORDER BY max_peso ASC;
+-- -----------------------------------------------------------------------------------------
+-- Generación del reparto para una determinada zona (enviada al sp como parámetro)
+-- -----------------------------------------------------------------------------------------
+
+CALL sp_generar_reparto(2)
+
+
+SELECT zona, fn_seleccionar_vehiculo(`peso total`, `volumen total`,`cantidad total`) AS 'vehiculo' FROM totales_por_fecha ORDER BY `peso total` ASC;
 
