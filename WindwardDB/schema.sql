@@ -175,6 +175,7 @@ FOREIGN KEY (fk_id_pedido)
 REFERENCES PEDIDOS (id_pedido)
 ON DELETE CASCADE;
 
+-- No necesito el id de cada pedido en la tabla de repartos. Con saber la zona y la fecha (que se la agrego con el alter table de más abajo) puedo armar una vista con el detalle de los pedidos involucrados (vw_detalle_repartos)
 ALTER TABLE REPARTOS
 DROP FOREIGN KEY repartos_ibfk_1;
 
@@ -189,3 +190,4 @@ ON DELETE CASCADE;
 
 ALTER TABLE REPARTOS
 ADD fecha DATETIME NOT NULL default (CURRENT_TIMESTAMP);
+

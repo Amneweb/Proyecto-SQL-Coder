@@ -19,6 +19,10 @@ INSERT INTO PRODUCTOS (sku, nombre, descripcion, marca, dimension_longitud, dime
 	('CL65PB', 'Clorex 12x75 FW90 Linea Premium', 'Batería de 12x75 amperes, calcio-plata, marca Edna, fabricada en Argentina', 'CLOREX', 185, 140, 190, 18, 40),
 	('CL65PBS', 'Edna 12x65 FW70', 'Edna 12x65 FW70, especial para autos nafteros, Edna línea Premium', 'CLOREX', 185, 135, 180, 14, 45),
 	('CL16019', 'Clorex 19 placas para colectivos', 'Edna 12x65 FW70, especial para autos nafteros, Edna línea Premium', 'CLOREX', 200, 150, 190, 23, 28);
+	INSERT INTO PRODUCTOS VALUES
+	(NULL,'CL23P180', 'Clorex 23 placas para colectivos', 'Clorex 180 para colectivos, 23 placas, garantia 1 año', 'CLOREX', 500, 200, 190, 50, 50),
+	(NULL,'MB25', 'Edna 25 placas para colectivos', 'Edna para colectivos, garantia 1 año', 'CLOREX', 500, 200, 190, 50, 20)
+	;
 
 INSERT INTO EMPLEADOS (nombre,fk_tipo_documento,nro_documento,telefono,fk_rol)VALUES("Mario Daniel","DNI","40000000","116666666",3), ("Mario Guillermo","DNI","40000001","116666666",3),("Mario Ramirez","DNI","40000002","116666666",3);
 
@@ -39,6 +43,9 @@ INSERT INTO PRECIOS_PRODUCTO (fk_id_producto,fk_id_lista,precio) VALUES
 (4,1,25000),(4,2,30000),(4,3,22000),
 (5,1,30000),(5,2,39000),(5,3,25000),
 (6,1,220000),(6,2,300000),(6,3,245000);
+INSERT INTO PRECIOS_PRODUCTO VALUES
+(NULL,7,1,300000),(NULL,7,2,400500),(NULL,7,3,325000),
+(NULL,8,1,230000),(NULL, 8, 2, 250000),(NULL,8,3,235000);
 
 
 INSERT INTO PEDIDOS (fk_id_cliente, fk_id_estado, fecha_pedido, fecha_entrega, fecha_efectiva_entrega)
@@ -47,8 +54,14 @@ VALUES (1, "APR", '2024-08-31','2024-08-31',NULL),
 (7, "HEC", '2024-08-31','2024-08-31',NULL),
 (8, "HEC", '2024-08-31','2024-08-31',NULL);
 
+INSERT INTO PEDIDOS VALUES (NULL,8,"APR",'2024-08-31','2024-08-31',NULL),
+(NULL,6,"HEC",'2024-08-31','2024-08-31',NULL);
+
 INSERT INTO DETALLE_PEDIDOS (fk_id_pedido,fk_id_producto,cantidad)
 VALUES (1,1,10),(1,2,5),(1,5,2),(2,2,3),(3,4,15),(3,2,5),(3,1,21),(4,2,20),(4,1,1);
+
+INSERT INTO DETALLE_PEDIDOS
+VALUES (11,1,10),(11,4,2),(11,3,2),(11,2,3),(12,4,6),(12,2,5),(12,1,13);
 
 INSERT INTO ESTADOS VALUES ("SBY","Stand By, en espera de stock o lugar");
 

@@ -57,16 +57,6 @@ SELECT * FROM dimensiones;
 
 SELECT * FROM dimensiones WHERE zona = 1;
 
--- ----------------------------------------
--- VISTA totales_por_fecha
--- ----------------------------------------
-
--- La siguiente vista muestra, para una fecha dada, los totales de volumen, cantidad y peso de cada pedido, y se agrupan por zona.
--- Basada en la vista: dimensiones
-
-CREATE OR REPLACE VIEW totales_por_fecha AS (SELECT zona, fecha, sum(volumen) AS 'volumen total', sum(peso_total) AS 'peso total', sum(qty) AS 'cantidad total' FROM dimensiones WHERE fecha='2024-08-31' GROUP BY zona);
-
-SELECT * FROM totales_por_fecha;
 
 -- ---------------------------------------
 -- VISTA pedido_cliente
@@ -87,5 +77,13 @@ SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedi
 
 SELECT id_cliente,razon_social, SUM(Total_renglon) AS "Total pedido" FROM pedido_cliente WHERE fecha = @fecha_pedido GROUP BY id_cliente;
 
-CREATE OR REPLACE VIEW vehiculos_zonas AS 
-(SELECT t.*, v.apodo, v.max_volumen,v.max_cantidades,v.max_peso FROM totales_por_fecha t JOIN VEHICULOS v ORDER BY zona ASC, max_peso ASC);
+-- CREATE OR REPLACE VIEW vehiculos_zonas AS 
+-- (SELECT t.*, v.apodo, v.max_volumen,v.max_cantidades,v.max_peso FROM totales_por_fecha t JOIN VEHICULOS v ORDER BY zona ASC, max_peso ASC);
+
+
+SET @fecha='2024-08-31';
+SET @zona = 2;
+SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = @zona AND p.fecha_pedido = @fecha;
+
+
+SELECT r.id_reparto, r.fk_id_zona, r.fecha, cz.fk_id_cliente,cz.id_pedido,pc.sku,pc.cantidad FROM REPARTOS r INNER JOIN (SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido, p.id_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = @zona AND p.fecha_pedido = @fecha) AS cz ON r.fk_id_zona = cz.fk_zona INNER JOIN pedido_cliente pc ON cz.fk_id_cliente = pc.id_cliente

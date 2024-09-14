@@ -260,7 +260,7 @@ END $$
 -- ----------------------------------
 -- SP sp_generar_reparto
 -- ----------------------------------
--- En base a la vista totales
+-- En base a la tabla provisoria totales_por_fecha, se llama a la función que selecciona un vehículo para una determinada zona y se genera un reparto. Esto debería hacerse automáticamente para todas las zonas que tengan pedidos en el día en cuestión.
 
 DROP PROCEDURE IF EXISTS sp_generar_reparto;
 DELIMITER $$
@@ -281,8 +281,7 @@ END $$
 -- ----------------------------------
 -- SP sp_generar_totales_por_fecha
 -- ----------------------------------
--- SP para generar una tabla (que luego se borra) similar a la vista "totales_por_fecha". Esto lo hice porque no puedo usar variables en las vistas.
-
+-- SP para generar una tabla (que luego se borra) que contiene los totales de peso, volumen y cantidad agrupados por zona para una determinada fecha. Este SP es llamado por el sp que genera los repartos y al final del mismo, se borra la tabla. Lo hice con EXECUTE porque no me dejaba usar una variable en el WHERE del select.
 
 DROP PROCEDURE IF EXISTS sp_generar_totales_por_fecha;
 DELIMITER $$
@@ -293,4 +292,49 @@ SET @sql = CONCAT('CREATE TABLE totales_por_fecha (SELECT zona, fecha, sum(volum
 PREPARE sentencia FROM @sql;
 EXECUTE sentencia;
 DEALLOCATE PREPARE sentencia;
+END $$
+
+-- ------------------------------------------
+-- SP sp_detalle_repartos
+-- ------------------------------------------
+-- SP que genera una vista con el detalle de los pedidos que componen cada reparto
+
+DROP PROCEDURE IF EXISTS sp_detalle_repartos;
+DELIMITER $$
+CREATE PROCEDURE `sp_detalle_repartos` (IN fecha_elegida DATE, IN IDzona INT)
+BEGIN
+SET @sql = CONCAT('CREATE OR REPLACE VIEW vw_detalle_repartos AS (SELECT r.id_reparto, r.fk_id_zona, r.fecha, cz.fk_id_cliente,cz.id_pedido,pc.sku,pc.cantidad FROM REPARTOS r INNER JOIN (SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido, p.id_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = ', IDzona, ' AND p.fecha_pedido = "',fecha_elegida, '") AS cz ON r.fk_id_zona = cz.fk_zona INNER JOIN pedido_cliente pc ON cz.fk_id_cliente = pc.id_cliente)');
+PREPARE sentencia FROM @sql;
+EXECUTE sentencia;
+DEALLOCATE PREPARE sentencia;
+END $$
+
+-- ----------------------------------
+-- SP sp_generar_repartos
+-- ----------------------------------
+-- En base a la tabla provisoria totales_por_fecha, se llama a la función que selecciona un vehículo para una determinada zona y se genera un reparto. Esto debería hacerse automáticamente para todas las zonas que tengan pedidos en el día en cuestión.
+
+DROP PROCEDURE IF EXISTS sp_generar_repartos;
+DELIMITER $$
+CREATE PROCEDURE `sp_generar_repartos`(IN fecha_elegida DATE)
+BEGIN
+DECLARE var_vehiculo INT;
+DECLARE IDzona INT;
+DECLARE var_fecha DATE;
+DECLARE i INT;
+DECLARE n INT;
+
+CALL sp_generar_totales_por_fecha(fecha_elegida);
+
+SET n = (select count(*) from totales_por_fecha);
+SET i = 0;
+
+WHILE i < n DO
+SET IDzona = (SELECT zona FROM totales_por_fecha LIMIT i,1);
+SELECT fn_seleccionar_vehiculo(fecha_elegida,`peso total`, `volumen total`,`cantidad total`) AS 'vehiculo' FROM totales_por_fecha WHERE zona=IDzona ORDER BY `peso total` ASC INTO var_vehiculo;
+INSERT INTO REPARTOS VALUES (NULL,var_vehiculo,1,NULL,IDzona,fecha_elegida);
+SET i = i + 1;
+END WHILE;
+
+DROP TABLE IF EXISTS totales_por_fecha;
 END $$
