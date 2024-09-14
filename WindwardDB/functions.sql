@@ -29,9 +29,9 @@ RETURN (peso*cantidad);
 -- --------------------------------------
 -- FUNCION fn_comparar_maximos
 -- --------------------------------------
-
+DROP FUNCTION IF EXISTS fn_seleccionar_vehiculo;
 DELIMITER $$
-CREATE FUNCTION `fn_seleccionar_vehiculo`(fecha DATE, peso FLOAT, volumen FLOAT, cantidad INT) RETURNS int
+CREATE FUNCTION `fn_seleccionar_vehiculo`(fecha_reparto DATE, peso FLOAT, volumen FLOAT, cantidad INT) RETURNS int
     READS SQL DATA
 BEGIN
 DECLARE maxVolumen INT DEFAULT 0;
@@ -42,9 +42,9 @@ DECLARE n INT DEFAULT 0;
 DECLARE i INT DEFAULT 0;
 SET n = (SELECT COUNT(*) FROM VEHICULOS);
 SET i=0;
-
+SET @vehiculos_ya_asignados = (SELECT GROUP_CONCAT(fk_id_vehiculo SEPARATOR ',') AS vehiculos FROM (SELECT * FROM REPARTOS WHERE fecha=fecha_reparto) as ids);
 WHILE i < n DO
-SELECT max_peso, max_volumen, max_cantidades, id_vehiculo  FROM VEHICULOS ORDER BY max_peso ASC LIMIT i,1 INTO maxPeso, maxVolumen, maxCantidad,id_seleccionado;
+SELECT max_peso, max_volumen, max_cantidades, id_vehiculo  FROM VEHICULOS WHERE (FIND_IN_SET(id_vehiculo,@vehiculos_ya_asignados) = 0) ORDER BY max_peso ASC LIMIT i,1 INTO maxPeso, maxVolumen, maxCantidad,id_seleccionado;
 -- Empieza primer verificacion con el peso
 IF (peso > maxPeso) THEN
 SET i = i + 1;

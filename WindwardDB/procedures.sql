@@ -270,10 +270,11 @@ DECLARE var_vehiculo INT;
 DECLARE var_zona INT;
 DECLARE var_fecha DATE;
 
-CALL sp_generar_totales_por_fecha(fecha_elegida)
+CALL sp_generar_totales_por_fecha(fecha_elegida);
 
 SELECT fn_seleccionar_vehiculo(fecha_elegida,`peso total`, `volumen total`,`cantidad total`) AS 'vehiculo' FROM totales_por_fecha WHERE zona=IDzona ORDER BY `peso total` ASC INTO var_vehiculo;
 INSERT INTO REPARTOS VALUES (NULL,var_vehiculo,1,NULL,IDzona,fecha_elegida);
+DROP TABLE IF EXISTS totales_por_fecha;
 END $$
 
 
@@ -288,5 +289,8 @@ DELIMITER $$
 CREATE PROCEDURE `sp_generar_totales_por_fecha` (IN fecha_elegida DATE)
 BEGIN
 DROP TABLE IF EXISTS totales_por_fecha;
-CREATE TABLE totales_por_fecha (SELECT zona, fecha, sum(volumen) AS 'volumen total', sum(peso_total) AS 'peso total', sum(qty) AS 'cantidad total' FROM dimensiones WHERE fecha=fecha_elegida GROUP BY zona);
+SET @sql = CONCAT('CREATE TABLE totales_por_fecha (SELECT zona, fecha, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones WHERE fecha="',fecha_elegida,'" GROUP BY zona)');
+PREPARE sentencia FROM @sql;
+EXECUTE sentencia;
+DEALLOCATE PREPARE sentencia;
 END $$
