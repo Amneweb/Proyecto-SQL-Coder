@@ -42,13 +42,14 @@ DECLARE n INT DEFAULT 0;
 DECLARE i INT DEFAULT 0;
 SET n = (SELECT COUNT(*) FROM VEHICULOS);
 SET i=0;
-IF ((SELECT COUNT(*) FROM REPARTOS WHERE fecha=fecha_reparto) = 0) THEN
+
+if ((select count(*) from (SELECT id_reparto FROM REPARTOS WHERE fecha=fecha_reparto) as repartos)= 0) THEN
 SET @vehiculos_ya_asignados = 0;
 ELSE
 SET @vehiculos_ya_asignados = (SELECT GROUP_CONCAT(fk_id_vehiculo SEPARATOR ',') AS vehiculos FROM (SELECT * FROM REPARTOS WHERE fecha=fecha_reparto) as ids);
 END IF;
 WHILE i < n DO
-SELECT max_peso, max_volumen, max_cantidades, id_vehiculo  FROM VEHICULOS WHERE (FIND_IN_SET(id_vehiculo,@vehiculos_ya_asignados)=0) ORDER BY max_peso ASC LIMIT i,1 INTO maxPeso, maxVolumen, maxCantidad,id_seleccionado;
+SELECT max_peso, max_volumen, max_cantidades, id_vehiculo  FROM VEHICULOS WHERE (FIND_IN_SET(id_vehiculo,@vehiculos_ya_asignados) = 0) ORDER BY max_peso ASC LIMIT i,1 INTO maxPeso, maxVolumen, maxCantidad,id_seleccionado;
 -- Empieza primer verificacion con el peso
 IF (peso > maxPeso) THEN
 SET i = i + 1;
