@@ -1,15 +1,18 @@
 # PROYECTO CURSO SQL DE CODERHOUSE
+Bienvenidos a "WINDWARD" distribuidora mayorista (ficticia) de baterías para vehículos que cuenta con una flota propia de camionetas para reparto.
+Este proyecto trata de una app de gestión online para mejorar el sistema de órdenes de pedidos y logística de entrega. 
+
 
 > [!NOTE]  
 > El archivo de creación del schema y las tablas está dentro de la carpeta WindwardDB
 
 ## Objetivo
 
-Diseñar una base de datos para una distribuidora mayorista de productos (que tiene transporte propio para realizar las entregas en un radio de hasta 40 km), de manera que los clientes puedan realizar sus pedidos online, que reciban la confirmación de los mismos y se programe el día en que realizará la entrega en base al domicilio.
+Diseñar una base de datos para la distribuidora, de manera que los clientes puedan realizar sus pedidos online, que reciban la confirmación de los mismos y se programe el día en que realizará la entrega en base al domicilio.
 
 ## Situación actual
 
-Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una planilla de excel y de la misma se hacen capturas de pantalla que se envían a los encargados de depósito, quienes arman los pedidos y los cargan en las camionetas de reparto. El recorrido de cada camioneta de reparto se organiza en forma manual, conociendo las zonas de ubicación de los clientes y en base a los días de reparto para cada zona. Si el volumen de reparto en un día / zona determinada es muy alto para un día determinado, se puede decidir no entregar en el mismo día.
+Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una planilla de excel y de la misma se hacen capturas de pantalla que se envían a los encargados de depósito, quienes arman los pedidos y los cargan en las camionetas de reparto. El recorrido de cada camioneta de reparto se organiza en forma manual, conociendo las zonas de ubicación de los clientes y en base a los días de reparto para cada zona. Si el volumen de reparto en un día / zona determinada es muy alto para ese día, se puede decidir no entregar todo en el mismo día, o se hacen 2 circuitos, uno a la mañana y otro a la tarde.
 
 ### Problemas de la situación actual
 
@@ -21,12 +24,35 @@ Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una 
 
 ### Solución propuesta
 
-**Elaborar una app online (de la cual este proyecto consistirá sólo en la base de datos) que permita a los clientes armar sus pedidos directamente.**
+**Elaborar una app de gestión online (de la cual este proyecto consistirá sólo en la base de datos) que permita:**
+- **A los clientes:** armar sus pedidos directamente y sin errores, conociendo los precios y el total de la compra al armar el carrito
+- **A los empleados:** ver los pedidos directamente en la aplicación a medida que se van generando, y tener una hoja de ruta pre-armada por el sistema (la hoja de ruta se puede modificar por los administradores de la empresa, quienes son los que finalmente deciden qué clientes tienen prioridad en el caso de stock bajo de algún producto, o en el caso de que alguno de los vehículos o choferes no estén disponibles... o ante cualquier situación que pueda surgir)
+
+**Con la APP**
 
 - Los clientes tendrán acceso al sistema, en el que podrán elegir los productos y las cantidades (el stock de los productos estará cargado en el sistema).
 - Una vez que el cliente armó su pedido, recibe confirmación del mismo y una orden de compra con el valor total de la misma. (Eventualmente se podría traer la información de las cuentas corrientes de los clientes, para que estos sepan si tienen deudas y a cuánto ascenderá la misma sumando el nuevo pedido)
-- Los encargados de depósito tendrán acceso al sistema y podrán ver los pedidos realizados y comenzar a armarlos (tal vez se requiera autorización de un gerente de distribución antes de que los encargados de depósito puedan tener el acceso a los pedidos. Eso lo definiré a medida que avance el curso.)
+- Los encargados de depósito tendrán acceso al sistema y podrán ver los pedidos realizados y comenzar a armarlos (tal vez se requiera autorización de un gerente de distribución antes de que los encargados de depósito puedan tener el acceso a los pedidos.)
 - El sistema distribuirá los pedidos por días y zonas de entrega y armará la posible logística de entrega
+# Informes
+A continuación se presentan los informes generados con las tablas creadas para el proyecto. Los mismos son:
+- Kilómetros/baterias: (en un periodo de tiempo determinado, que puede ser dia, semana o mes)
+Se muestra el "rendimiento" del recorrido de cada vehiculo teniendo en cuenta los kilometros andados. Se puede evaluar si conviene hacer muchos viajes cortos o uno largo
+- Baterias/zona: para evaluar la zona con mas compras en un determinado periodo de tiempo
+- Baterias/kilometro: (para cada cliente) para evaluar si conviene llevar las baterias a los clientes de mas lejos, en funcion de las baterias que compra "por kilometro" 
+# A futuro
+Hay gran cantidad de procedimientos nuevos y mejoras que se podrían sumar a la app de gestión. Algunos de ellos podrían ser:
+
+- **STOCK:**
+Cuando un producto determinado llega a un mínimo de stock, el sistema envía una alerta a los administradores.
+
+- **GARANTÍAS:**
+Los productos tienen garantía de 1 año y la gestión actual es muy "manual" y conlleva muchos errores: Los choferes reciben los productos que supuestamente están en garantía y los traen al depósito donde se evalúa si corresponde o no corresponde la garantía. Si no corresponde, se devuelven; si corresponden, se almancenan hasta el momento de llevar a la fábrica. 
+Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reemplazados por la app, y el proceso podría ser:
+- - El chofer ingresa en la app que recibió el producto en garantía
+- - El encargado de depósito marca en la app si el producto es válido como garantía o si se devuelve
+- - Si se devuelve, cuando el cliente que envió la garantía hace un nuevo pedido, el sistema avisa que hay una devolución pendiente y la carga automáticamente en el reparto
+- - Si no se devuelve, se marca en la app los datos por lo que se aceptó la garantía, el cliente, la marca, etc y una vez que el cliente genera un nuevo pedido, el sistema agrega al pedido la garantia a reponer
 
 # Esquema básico de prueba para la segunda entrega
 

@@ -23,22 +23,55 @@ SET @idNuevoPedido = NEW.id_pedido;
 -- 4) Guarda los datos de la tabla provisoria junto con el id del pedido en la tabla detalle de pedidos
 -- 5) Justo antes del insert en la tabla detalle de pedidos, se dispara el trigger de verificación de stock, para no generar pedidos con más cantidades de las existentes. Si de un producto se pide una cantidad mayor al stock, el trigger hace que la cantidad guardada en el pedido sea igual al stock.
 -- 6) Borra la tabla provisoria y devuelve los mensajes de alerta generados por el trigger
-
+DROP PROCEDURE IF EXISTS sp_generar_pedidos;
 DELIMITER $$
-CREATE PROCEDURE `sp_generar_pedidos` (IN id_cliente INT, IN json_pedido JSON)
+CREATE PROCEDURE `sp_generar_pedidos` (IN IDcliente INT, IN json_pedido JSON)
 BEGIN
-INSERT INTO PEDIDOS (fk_id_cliente, fk_id_estado, fecha_pedido, fecha_entrega, fecha_efectiva_entrega)
-VALUES (id_cliente, "HEC", CURDATE(),CURDATE(),NULL);
-CREATE TABLE detalle_provisorio 
-(producto INT NOT NULL,
-cantidad INT NOT NULL);
-INSERT INTO detalle_provisorio (producto, cantidad) SELECT * FROM JSON_TABLE(json_pedido,"$[*]" COLUMNS (
-    fk_id_producto INT PATH "$.producto", cantidad INT PATH "$.cantidad"
-)) AS detalles_json;
-
-    INSERT INTO DETALLE_PEDIDOS (fk_id_producto, cantidad,fk_id_pedido ) (SELECT producto, cantidad, @idNuevoPedido FROM detalle_provisorio );
-	SELECT @msj;
-DROP TABLE detalle_provisorio;
+DECLARE n INT;
+DECLARE i INT;
+-- Primero verifico si existe el cliente
+-- 1
+IF NOT EXISTS (SELECT id_cliente FROM CLIENTES WHERE id_cliente = IDcliente) THEN SET @err = "No existe ningún cliente con ese ID"; SELECT @err;
+	ELSE
+		SET n=JSON_LENGTH(json_pedido);
+		-- 2
+		IF (n = 0) THEN
+		SET @err = "El carrito está vacío, no se puede generar el pedido";
+		SELECT @err;
+			ELSE
+				SET i = 0;
+				WHILE i<n DO
+				-- 3
+				IF NOT EXISTS (SELECT id_producto FROM PRODUCTOS WHERE id_producto = (SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].producto')) AS json_producto)) THEN
+				SET json_pedido = JSON_REMOVE(json_pedido,concat('$[',i,'].producto'),concat('$[',i,'].cantidad'));
+				SET @err = "uno de los productos que trataste de ingresar tiene un id inexistente y será borrado";
+				ELSE
+					-- 4
+					IF ((SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].cantidad'))= 0) OR ((SELECT stock FROM PRODUCTOS WHERE 
+					id_producto = (SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].producto')) AS json_producto)=0))) THEN 
+					SET json_pedido = JSON_REMOVE(json_pedido,concat('$[',i,'].producto'),concat('$[',i,'].cantidad'));
+					SET @err="Uno de los productos solicitados tenia cantidad 0 y fue borrado del pedido";
+					-- cierro 4
+					END IF;
+				-- cierro 3
+				END IF;
+				SET i=i+1;
+			END WHILE;
+			SELECT @err;
+			-- 5
+			IF @err ='' THEN
+				INSERT INTO PEDIDOS (fk_id_cliente, fk_id_estado, fecha_pedido, fecha_entrega, fecha_efectiva_entrega)
+				VALUES (IDcliente, "HEC", CURDATE(),CURDATE(),NULL);
+				INSERT INTO DETALLE_PEDIDOS (fk_id_producto, cantidad,fk_id_pedido ) (SELECT *,@idNuevoPedido FROM JSON_TABLE(json_pedido,"$[*]" COLUMNS (fk_id_producto INT PATH "$.producto", cantidad INT PATH "$.cantidad")) AS detalles_json);
+				SELECT @msj;
+				ELSE
+					SELECT @err;
+			-- cierro 5
+			END IF;
+		-- cierro 2	
+		END IF;
+	-- cierro 1
+	END IF;
 END $$
 
 -- --------------------------------------
