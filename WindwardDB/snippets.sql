@@ -36,7 +36,7 @@ SELECT * FROM DETALLE_PEDIDOS;
 -- ---------------------------------------------------------------------------------
 -- 1) Vemos el stock de los productos
 
-SELECT id_producto, nombre, stock FROM PRODUCTOS;
+SELECT id_producto, nombre, stock FROM PRODUCTOS WHERE id_producto = 5;
 
 -- 2) Hacemos correr el procedure de generar pedidos
 -- Argumentos (IDcliente, JSONpedido)
@@ -48,7 +48,7 @@ CALL sp_generar_pedidos (2,'[{"producto":5,"cantidad":100}]');
 SET @cliente = 2;
 SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 
--- Volvemos a ver el stock de los productos, que aun no cambió a pesar de los pedidos, porque recién se modifica cuando el pedido pasa a estado aprobado. (Ver más abajo el código correspondiente a este proceso - linea 94) 
+-- Volvemos a ver el stock de los productos, que aun no cambió a pesar de los pedidos, porque recién se modifica cuando el pedido pasa a estado aprobado. (Ver más abajo el código correspondiente a este proceso - linea 144) 
 
 SELECT id_producto, nombre, stock FROM PRODUCTOS;
 
@@ -134,7 +134,7 @@ SELECT razon_social,SUM(Total_renglon) AS "Total pedido" FROM pedido_cliente WHE
 -- ---------------------------------------------------------------------------------
 -- Aprobar el pedido con id 5 (y dar de baja del stock los productos involucrados). 
 -- ---------------------------------------------------------------------------------
--- 1) Vemos el detalle del pedido 5, y las cantidades en stock, para comparar
+-- 1) Vemos el detalle del pedido 5, y las cantidades en stock, para comparar después
 
 SELECT dp.*, p.stock FROM DETALLE_PEDIDOS dp INNER JOIN PRODUCTOS p ON dp.fk_id_producto = p.id_producto WHERE dp.fk_id_pedido = 5;
 

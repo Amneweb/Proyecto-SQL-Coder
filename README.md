@@ -3,10 +3,6 @@
 Bienvenidos a "WINDWARD-APP", sistema de gestión online para una distribuidora mayorista (ficticia) de baterías para vehículos, que cuenta con una flota propia de camionetas para reparto.
 Este proyecto trata de la base de datos, con sus procedimientos y funciones, para mejorar el sistema de órdenes de pedidos y logística de entrega. 
 
-
-> [!NOTE]  
-> El archivo de creación del schema y las tablas está dentro de la carpeta WindwardDB
-
 ## Objetivo
 
 Diseñar una base de datos para la distribuidora, de manera que los clientes puedan realizar sus pedidos online, que reciban la confirmación de los mismos y se programe el día en que realizará la entrega en base al domicilio.
@@ -32,13 +28,13 @@ Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una 
 - **A los clientes:** armar sus pedidos directamente y sin errores, conociendo los precios y el total de la compra al armar el carrito
 - **A los empleados:** ver los pedidos directamente en la aplicación a medida que se van generando, y tener una hoja de ruta pre-armada por el sistema (la hoja de ruta se puede modificar por los administradores de la empresa, quienes son los que finalmente deciden qué clientes tienen prioridad en el caso de stock bajo de algún producto, o en el caso de que alguno de los vehículos o choferes no estén disponibles... o ante cualquier situación que pueda surgir)
 
-**Con la APP**
+**Con la APP** :muscle:
 
 - Los clientes tendrán acceso al sistema, en el que podrán elegir los productos y las cantidades (el stock de los productos estará cargado en el sistema).
 - Una vez que el cliente armó su pedido, recibe confirmación del mismo y una orden de compra con el valor total de la misma. (Eventualmente se podría traer la información de las cuentas corrientes de los clientes, para que éstos sepan si tienen deudas y a cuánto ascenderá la misma sumando el nuevo pedido)
 - Los encargados de depósito tendrán acceso al sistema y podrán ver los pedidos realizados y comenzar a armarlos (tal vez se requiera autorización de un gerente de distribución antes de que los encargados de depósito puedan tener el acceso a los pedidos.)
 - El sistema distribuirá los pedidos por días y zonas de entrega y armará la posible logística de entrega
-# Informes
+# Informes :chart_with_upwards_trend:
 A continuación se presentan algunos de los posibles informes generados con las tablas creadas para el proyecto. Los mismos son:
 - Kilómetros/baterias: (en un periodo de tiempo determinado, que puede ser dia, semana o mes)
 Se muestra el "rendimiento" del recorrido de cada vehiculo teniendo en cuenta los kilómetros andados. Se puede evaluar si conviene hacer muchos viajes cortos o uno largo
@@ -77,7 +73,7 @@ Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reempl
 
 # Esquema básico de evaluación del proyecto
 
-> [!NOTE]  
+> [!TIP]  
 > Los scripts sql para probar el proyecto se encuentran en la carpeta WindwardDB y se deben correr en el siguiente orden:
 > - schema.sql - contiene la generación y modificación de tablas
 > - datos.sql - carga los datos en las tablas
@@ -89,8 +85,8 @@ Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reempl
 
 Cada uno de los archivos de procedures, functions y views contiene la descripción del proceso, función o vista correspondiente, las tablas que involucran y lo que se quiere obtener.
 
-### Archivo *snippets.sql*
-Este archivo contiene líneas de comando sugeridas para probar todos los procesos y funciones. Está dividio en líneas que ejecutan los procesos que haría un cliente, y líneas que ejecutan los procesos que utilizarían los administradores.
+### :teacher: Archivo *snippets.sql*
+Este archivo contiene líneas de comando sugeridas para probar todos los procesos y funciones. Está dividido en líneas que ejecutan los procesos que seguiría un cliente, y líneas que ejecutan los procesos que utilizarían los administradores.
 
 ### MANEJO DE ERRORES 
 Importante: NO todos los procesos y funciones tienen programado un manejo de errores, por lo que si se prueban los procesos con claves incorrectas o datos no válidos, podría haber errores, no por el proceso en sí, sino por los datos de entrada.

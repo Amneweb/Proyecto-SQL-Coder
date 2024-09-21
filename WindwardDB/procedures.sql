@@ -13,21 +13,34 @@ SET @idNuevoPedido = NEW.id_pedido;
 -- SP sp_generar_pedidos
 -- --------------------------------------
 
--- Este SP es para agregar los productos y las respectivas cantidades a la tabla detalle de pedidos, y toma como dato el id generado en la tabla PEDIDOS, que lo recupero con el trigger anterior. Los datos de entrada son:
+-- Este SP es para agregar los pedidos a la tabla PEDIDOS, y los correspondientes objetos {producto,cantidad} a la tabla DETALLE_PEDIDOS. El id del pedido se obtiene con el trigger disparado por la insersión del nuevo pedido en la tabla PEDIDOS.
+
+-- Los datos de entrada son:
+
 -- 1) El id del cliente
 -- 2) Un json con los productos y las cantidades
--- Los pasos del SP son:
--- 1) Inserta el pedido en la tabla PEDIDOS, con el id del cliente, el estado del pedido que en este caso es "HEC" (hecho), y las fechas del pedido y programadasa de entrega
--- 2) Una vez insertado el pedido, el trigger devuelve el nuevo id del pedido
 
--- 5) Justo antes del insert en la tabla detalle de pedidos, se dispara el trigger de verificación de stock, para no generar pedidos con más cantidades de las existentes. Si de un producto se pide una cantidad mayor al stock, el trigger hace que la cantidad guardada en el pedido sea igual al stock.
--- 6) Borra la tabla provisoria y devuelve los mensajes de alerta generados por el trigger
+-- Los pasos del SP son:
+
+-- 1. Verifica que exista el cliente
+-- 2. Verifica que el array del json no esté vacío
+-- 3. Si las condiciones anteriores se cumplen, carga un nuevo registro en la tabla PEDIDOS
+-- 4. En base a la longitud del json de pedidos, se itera sobre el mismo y se van insertando los pares producto-cantidad en la tabla de detalles siempre que:
+-- ..4.a El id del producto corresponda a un producto existente
+-- ..4.b La cantidad solicitada sea mayor que 0
+-- ..4.c El stock del producto sea mayor que 0
+-- 5. Si las condiciones anteriores hacen que no se pueda ingresar ningún registro a la tabla detalle de pedidos, se borra el registro recién ingresado a la tabla pedidos.
+
 DROP PROCEDURE IF EXISTS sp_generar_pedidos;
 DELIMITER $$
 CREATE PROCEDURE `sp_generar_pedidos` (IN IDcliente INT, IN json_pedido JSON)
 BEGIN
+-- Longitud del JSON del pedido
 DECLARE n INT;
+-- Contador para iterar sobre el pedido
 DECLARE i INT;
+-- Acumulado de errores en el pedido
+DECLARE j INT;
 SET n=JSON_LENGTH(json_pedido);
 -- Primero verifico si existe el cliente
 -- 1
@@ -45,25 +58,34 @@ ELSE
 		SET @err = '';
 		SET @errIteracion = '';
 		SET i = 0;
-		SET j = 0;
+		set j = 0;
+		INSERT INTO PEDIDOS (fk_id_cliente, fk_id_estado, fecha_pedido, fecha_entrega, fecha_efectiva_entrega) VALUES (IDcliente, "HEC", CURDATE(),CURDATE(),NULL);
 		WHILE i < n DO
 			-- Verifico que el producto exista
 			-- 3
 			IF NOT EXISTS (SELECT id_producto FROM PRODUCTOS WHERE id_producto = (SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].producto')) AS json_producto)) THEN
 				SET @errIteracion = CONCAT(@errIteracion," Uno de los productos que trataste de ingresar (ingresado en la posicion ",i,") tiene un id inexistente y será borrado. ");
+				SET j=j+1;
 				SELECT @errIteracion;
+				SELECT j;
 			ELSE
 				-- Verifico que la cantidad solicitada no sea = 0 o que el producto no tenga stock = 0
 				-- 4
 				IF (SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].cantidad'))= 0) THEN 
 					SET @errIteracion=concat(@errIteracion," Uno de los productos solicitados (en la posicion ",i,") tenia cantidad 0 y fue borrado del pedido. ");
+					SET j=j+1;
 					SELECT @errIteracion;
+					SELECT j;
 				ELSE
-					-- 4.a
+					-- 5
 					IF ((SELECT stock FROM PRODUCTOS WHERE id_producto = (SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].producto')) AS json_producto))=0) THEN 
 						SET @errIteracion=concat(@errIteracion," Uno de los productos solicitados (en la posicion ",i,") tenia stock 0 y fue borrado del pedido. ");
+						SET j = j+1;
 						SELECT @errIteracion;
-					-- cierro 4.a
+						SELECT j;
+					ELSE 
+						INSERT INTO DETALLE_PEDIDOS (fk_id_producto, cantidad,fk_id_pedido ) VALUES ((SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].producto')) AS producto),(SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].cantidad')) AS cantidad),@idNuevoPedido);
+					-- cierro 5
 					END IF;
 				-- cierro 4
 				END IF;
@@ -71,30 +93,15 @@ ELSE
 			END IF;
 			SET i=i+1;
 		END WHILE;
-		-- Borro los objetos del json que no cumplieron con las consignas
-		
-		SET n=JSON_LENGTH(json_pedido);
-		-- Verifico la longitud del carrito luego de las transformaciones
-		IF (n=0) THEN 
-		SET @err = "El carrito quedó vacío luego de las transformaciones";
-		SELECT @err;
-		END IF;
-		-- cierro 2	
+	-- cierro 2	
 	END IF;
 -- cierro 1
 END IF;
-		-- 5
-		IF @err ='' THEN
-			INSERT INTO PEDIDOS (fk_id_cliente, fk_id_estado, fecha_pedido, fecha_entrega, fecha_efectiva_entrega)
-			VALUES (IDcliente, "HEC", CURDATE(),CURDATE(),NULL);
-			INSERT INTO DETALLE_PEDIDOS (fk_id_producto, cantidad,fk_id_pedido ) (SELECT *,@idNuevoPedido FROM JSON_TABLE(json_pedido,"$[*]" COLUMNS (fk_id_producto INT PATH "$.producto", cantidad INT PATH "$.cantidad")) AS detalles_json);
-			SELECT @msj;
-			SELECT @errIteracion;
-		ELSE
-			SELECT @err;
-		-- cierro 5
-		END IF;
-	
+IF j>=n THEN 
+SET @err = "No se pudo cargar ningún producto debido a que no se cumplieron las condiciones";
+DELETE FROM PEDIDOS WHERE id_pedido = @idNuevoPedido;
+END IF;
+SELECT @err,@errIteracion;	
 END $$
 
 -- --------------------------------------
