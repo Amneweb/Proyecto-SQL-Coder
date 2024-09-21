@@ -23,9 +23,11 @@ Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una 
 - El bloqueo de stock y consiguiente facturación / remisión a través del sistema ERM se realizan mientras se están armando los pedidos.
 - Los empleados de depósito no tienen acceso directo a los pedidos, sino que es el empleado que toma los pedidos quien decide cuándo enviarles la información
 
-### Solución propuesta
 
+### Solución propuesta
+![Banner Mock App](AppMockLand.jpg)
 **Elaborar una app de gestión online (de la cual este proyecto consistirá sólo en la base de datos) que permita:**
+
 - **A los clientes:** armar sus pedidos directamente y sin errores, conociendo los precios y el total de la compra al armar el carrito
 - **A los empleados:** ver los pedidos directamente en la aplicación a medida que se van generando, y tener una hoja de ruta pre-armada por el sistema (la hoja de ruta se puede modificar por los administradores de la empresa, quienes son los que finalmente deciden qué clientes tienen prioridad en el caso de stock bajo de algún producto, o en el caso de que alguno de los vehículos o choferes no estén disponibles... o ante cualquier situación que pueda surgir)
 
