@@ -306,7 +306,7 @@ DECLARE var_fecha DATE;
 CALL sp_generar_totales_por_fecha(fecha_elegida);
 
 SELECT fn_seleccionar_vehiculo(fecha_elegida,`peso total`, `volumen total`,`cantidad total`) AS 'vehiculo' FROM totales_por_fecha WHERE zona=IDzona ORDER BY `peso total` ASC INTO var_vehiculo;
-INSERT INTO REPARTOS VALUES (NULL,var_vehiculo,1,NULL,IDzona,fecha_elegida);
+INSERT INTO REPARTOS VALUES (NULL,var_vehiculo,1,IDzona,fecha_elegida, NULL, NULL);
 DROP TABLE IF EXISTS totales_por_fecha;
 END $$
 
@@ -365,9 +365,55 @@ SET i = 0;
 WHILE i < n DO
 SET IDzona = (SELECT zona FROM totales_por_fecha LIMIT i,1);
 SELECT fn_seleccionar_vehiculo(fecha_elegida,`peso total`, `volumen total`,`cantidad total`) AS 'vehiculo' FROM totales_por_fecha WHERE zona=IDzona ORDER BY `peso total` ASC INTO var_vehiculo;
-INSERT INTO REPARTOS VALUES (NULL,var_vehiculo,1,NULL,IDzona,fecha_elegida);
+INSERT INTO REPARTOS VALUES (NULL,var_vehiculo,1,IDzona,fecha_elegida,NULL, NULL);
 SET i = i + 1;
 END WHILE;
 
 DROP TABLE IF EXISTS totales_por_fecha;
+END $$
+
+-- ----------------------------------
+-- SP sp_cargar_km
+-- ----------------------------------
+
+-- Al comenzar y finalizar el reparto, cada chofer deberá ingresar los datos del kilometraje, para que el sistema calcule los km totales recorridos. En un futuro, se podría relacionar esta app con alguna app de tracking que calcule sola los km recorridos. 
+-- Los parámetros de entrada son 
+-- 1) el id del reparto;
+-- 2) el id del chofer; 
+-- 3) una variable que representa el momento en que se carga el kilomentraje (si momento = INI, significa que se cargan los km al comienzo del viaje; si momento = FIN, los km son al final del viaje. Para que sean válidos, FIN > INI) y finalmente 
+-- 4) los km que marca el odómetro del vehículo en el momento de cargar los datos
+
+DROP PROCEDURE IF EXISTS sp_cargar_km;
+DELIMITER $$
+CREATE PROCEDURE `sp_cargar_km`(IN nro_reparto INT,IN nro_chofer INT, IN momento VARCHAR(3), IN km INT)
+BEGIN
+DECLARE err VARCHAR(200);
+DECLARE kmIniciales INT;
+IF NOT EXISTS (SELECT id_reparto FROM REPARTOS WHERE id_reparto = nro_reparto AND fk_chofer = nro_chofer) THEN
+	SET err = "El chofer que está intentando cargar los datos no es el chofer que hizo el reparto";
+	SELECT err;
+ELSE	
+	IF (momento = "FIN") THEN 
+		SELECT km_ini FROM REPARTOS WHERE id_reparto = nro_reparto INTO kmIniciales;
+		IF ISNULL(kmIniciales) THEN 
+			SET err = "Falta cargar el kilometraje inicial";
+			SELECT err;
+		ELSE 
+			IF (km <= kmIniciales) THEN
+				SET err = "Error al cargar los datos, el kilometraje final que se intenta cargar es menor que el inicial";
+				SELECT err;
+				ELSE
+				UPDATE REPARTOS SET km_fin=km WHERE id_reparto = nro_reparto; 
+			END IF;
+		END IF;
+	ELSE
+		UPDATE REPARTOS SET km_ini=km WHERE id_reparto = nro_reparto;
+	END IF;
+END IF;
+IF err <> '' THEN 
+SELECT err;
+ELSE
+SET err='Los datos se cargaron con éxito';
+SELECT err;
+END IF;
 END $$

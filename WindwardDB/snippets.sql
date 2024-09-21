@@ -162,8 +162,13 @@ SELECT id_cliente,razon_social, SUM(Total_renglon) AS "Total pedido" FROM pedido
 -- ------------------------------------------------------------
 -- Ver productos con los precios para cada lista de precios
 -- ------------------------------------------------------------
+-- En esta vista (que se obtiene desde un SP, las listas de precios aparecen como columnas)
 
 CALL sp_pivot_listas();
+
+-- Comparar con la vista original
+
+SELECT * FROM productos_con_precios;
 
 -- ----------------------------------------------------------------
 -- Agregar nueva lista de precios (y precios para algunos productos)
@@ -197,6 +202,19 @@ SELECT * FROM MODIFICACION_ESTADOS;
 
 CALL sp_generar_reparto(2)
 
+-- -----------------------------------------------------------------------------------------
+-- Insersión del kilometraje inicial o final de un reparto determinado
+-- -----------------------------------------------------------------------------------------
+-- Los parámetros son: id_reparto, id_chofer, momento del reparto (antes o después), kilometraje que marca el odómetro del vehículo en el momento indicado
 
-SELECT zona, fn_seleccionar_vehiculo(`peso total`, `volumen total`,`cantidad total`) AS 'vehiculo' FROM totales_por_fecha ORDER BY `peso total` ASC;
+CALL sp_cargar_km(4,1, "INI", 200);
+CALL sp_cargar_km(4,1, "FIN", 250);
 
+-- Se pueden probar datos erróneos
+-- 1) Se trata de insertar un km final menor al inicial
+
+CALL sp_cargar_km(4,1,"FIN",190);
+
+-- 2) Se trata de insertar el km de un reparto con el id del chofer que no hizo el reparto
+
+CALL sp_cargar_km(4,2,"FIN",230);

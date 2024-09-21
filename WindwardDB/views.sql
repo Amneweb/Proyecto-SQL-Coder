@@ -37,7 +37,7 @@ CREATE OR REPLACE VIEW productos_con_precios AS
 
 SELECT * FROM productos_con_precios;
 
--- 2) UNA LISTA (en base a la variable id de cliente) Ese filtro se define en base al cliente, a traves de la funcion generar_variable_lista
+-- 2) UNA LISTA (en base a la variable id de cliente) Ese filtro se define en base al cliente, a traves de la funcion generar_variable_lista. Esta función podría reemplazarse directamente por una subquery en WHERE, pero de esta manera queda más prolijo.
 
 SET @cliente = 2;
 SELECT * FROM productos_con_precios WHERE lista = fn_generar_variable_lista(@cliente);
@@ -47,15 +47,22 @@ SELECT * FROM productos_con_precios WHERE lista = fn_generar_variable_lista(@cli
 -- VISTA dimensiones
 -- ----------------------------------------
 
--- La siguiente vista muestra las dimensiones de cada producto y los valores calculados de volumen y peso total por producto para un pedido determinado. Los datos se muestran ordenados por zona.
+-- La siguiente vista muestra las dimensiones de cada producto y los valores calculados de volumen y peso total por producto para todos los pedidos. Los datos se muestran ordenados por zona. Eventualmente se pueden filtrar por zona y fecha. Más adelante esta vista se usa para calcular los volumenes, pesos y cantidades totales por zona para una fecha determinada.
 -- Basada en las tablas: CLIENTES, PEDIDOS, DETALLE_PEDIDOS, PRODUCTOS
 
 CREATE OR REPLACE VIEW dimensiones AS
 (SELECT c.fk_zona AS 'zona', p.fecha_pedido AS 'fecha', p.id_pedido, d.cantidad AS 'qty', pro.sku AS 'SKU', pro.dimension_longitud AS 'longitud', pro.dimension_alto AS 'alto',pro.dimension_ancho AS 'ancho', pro.dimension_peso AS 'peso',fn_volumen_individual(pro.dimension_longitud,pro.dimension_alto,pro.dimension_ancho, d.cantidad) AS 'volumen',fn_peso_individual(pro.dimension_peso, d.cantidad) AS 'peso_total' FROM CLIENTES c INNER JOIN PEDIDOS p ON c.id_cliente = p.fk_id_cliente INNER JOIN DETALLE_PEDIDOS d ON d.fk_id_pedido = p.id_pedido INNER JOIN PRODUCTOS pro ON d.fk_id_producto=pro.id_producto ORDER BY c.fk_zona DESC,p.id_pedido ASC);
 
+-- Opciones de SELECT para la vista anterior
+-- -------------------------------------------
+
+-- 1) TODOS LOS PEDIDOS
+
 SELECT * FROM dimensiones;
 
-SELECT * FROM dimensiones WHERE zona = 1;
+-- 2) FILTRADO POR ZONA y FECHA
+
+SELECT * FROM dimensiones WHERE zona = 1 AND fecha = "2024-08-31";
 
 
 -- ---------------------------------------

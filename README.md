@@ -63,30 +63,31 @@ Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reempl
 
 # Tecnologías usadas
 
-<img src="2.png" width="20" alt="logo git"> Git: para control de versiones de los archivos
+<img src="2.png" width="20" alt="logo git"> **Git:** para control de versiones de los archivos
 
-<img src="3.png" width="20" alt="Logo github"> Github: como repositorio de la rama principal y la rama de desarrollo
+<img src="3.png" width="20" alt="Logo github"> **Github:** como repositorio de la rama principal y la rama de desarrollo
 
-<img src="1.png" width="20" alt="logo VScode"> Visual Studio Code: para escribir el código y manipular las ramas desde su terminal
+<img src="1.png" width="20" alt="logo VScode"> **Visual Studio Code:** para escribir el código y manipular las ramas desde su terminal
 
-<img src="5.png" width="20" alt="logo miro"> Miro: para el diagrama E-R 
+<img src="5.png" width="20" alt="logo miro"> **Miro:** para el diagrama E-R 
 
-<img src="6.png" width="20" alt="logo workbench"> WorkBench: como gestor de base de datos
+<img src="6.png" width="20" alt="logo workbench"> **WorkBench:** como gestor de base de datos
 
-<img src="4.png" width="20" alt="logo google sheets"> Google sheets: para la descripción de las tablas
+<img src="4.png" width="20" alt="logo google sheets"> **Google sheets:** para la descripción de las tablas
 
-# Esquema básico de prueba para la segunda entrega
+# Esquema básico de evaluación del proyecto
 
-Para probar lo hecho hasta ahora primero se deberán correr los archivos sql en la carpeta WindwardDB en el siguiente orden:
-- schema.sql - contiene la generación de tablas
+Los scripts sql para probar el proyecto se encuentran en la carpeta WindwardDB y se deben correr en el siguiente orden:
+- schema.sql - contiene la generación y modificación de tablas
 - datos.sql - carga los datos en las tablas
 - procedures.sql - contiene los triggers, funciones y stored procedures
 - functions.sql - contiene las funciones
 - views.sql - contiene las vistas
-- *snippets.sql* - con líneas de comando para probar todos los procesos y funciones
+Cada uno de los archivos de procedures, functions y views contiene la descripción del proceso, función o vista correspondiente, las tablas que involucran y lo que se quiere obtener.
 
+### Archivo *snippets.sql*
+Este archivo contiene líneas de comando sugeridas para probar todos los procesos y funciones. Está dividio en líneas que ejecutan los procesos que haría un cliente, y líneas que ejecutan los procesos que utilizarían los administradores.
 
-En cada archivo sql y antes de la definición de cada objeto o proceso, se puede ver la descripción de cada uno y las tablas que involucra.
 ### MANEJO DE ERRORES 
 Importante: NO todos los procesos y funciones tienen programado un manejo de errores, por lo que si se prueban los procesos con claves incorrectas o datos no válidos, podría haber errores, no por el proceso en sí, sino por los datos de entrada.
 

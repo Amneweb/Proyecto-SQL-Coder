@@ -1,5 +1,5 @@
 -- Created by Amneweb
-CREATE SCHEMA `windward2` DEFAULT CHARACTER SET utf8 COLLATE utf8_spanish_ci ;
+CREATE SCHEMA `windward2` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8_spanish_ci ;
 
 USE windward2;
 -- tables
@@ -190,4 +190,11 @@ ON DELETE CASCADE;
 
 ALTER TABLE REPARTOS
 ADD fecha DATETIME NOT NULL default (CURRENT_TIMESTAMP);
+
+-- En un principio había pensado que el chofer podía ingresar los km recorridos calculados por él mism, pero mucho mejor es que ingrese los kilometrajes del vehículo al comienzo y al final del recorrido. Para eso saco la columna kilómetros y agrego km_ini y km_fin
+
+ALTER TABLE REPARTOS
+ADD km_ini INT,
+ADD km_fin INT,
+DROP COLUMN kilometros;
 
