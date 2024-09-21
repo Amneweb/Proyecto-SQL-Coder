@@ -19,8 +19,7 @@ SET @idNuevoPedido = NEW.id_pedido;
 -- Los pasos del SP son:
 -- 1) Inserta el pedido en la tabla PEDIDOS, con el id del cliente, el estado del pedido que en este caso es "HEC" (hecho), y las fechas del pedido y programadasa de entrega
 -- 2) Una vez insertado el pedido, el trigger devuelve el nuevo id del pedido
--- 3) Convierte los datos del json en una tabla provisoria
--- 4) Guarda los datos de la tabla provisoria junto con el id del pedido en la tabla detalle de pedidos
+
 -- 5) Justo antes del insert en la tabla detalle de pedidos, se dispara el trigger de verificación de stock, para no generar pedidos con más cantidades de las existentes. Si de un producto se pide una cantidad mayor al stock, el trigger hace que la cantidad guardada en el pedido sea igual al stock.
 -- 6) Borra la tabla provisoria y devuelve los mensajes de alerta generados por el trigger
 DROP PROCEDURE IF EXISTS sp_generar_pedidos;
@@ -29,49 +28,73 @@ CREATE PROCEDURE `sp_generar_pedidos` (IN IDcliente INT, IN json_pedido JSON)
 BEGIN
 DECLARE n INT;
 DECLARE i INT;
+SET n=JSON_LENGTH(json_pedido);
 -- Primero verifico si existe el cliente
 -- 1
-IF NOT EXISTS (SELECT id_cliente FROM CLIENTES WHERE id_cliente = IDcliente) THEN SET @err = "No existe ningún cliente con ese ID"; SELECT @err;
-	ELSE
-		SET n=JSON_LENGTH(json_pedido);
-		-- 2
-		IF (n = 0) THEN
+IF NOT EXISTS (SELECT id_cliente FROM CLIENTES WHERE id_cliente = IDcliente) THEN 
+	SET @err = "No existe ningún cliente con ese ID"; 
+	SELECT @err;
+ELSE
+	SET @err = '';
+	-- Verifico si el carrito tiene productos (mediante la longitud del array)
+	-- 2
+	IF (n = 0) THEN
 		SET @err = "El carrito está vacío, no se puede generar el pedido";
 		SELECT @err;
+	ELSE
+		SET @err = '';
+		SET @errIteracion = '';
+		SET i = 0;
+		SET j = 0;
+		WHILE i < n DO
+			-- Verifico que el producto exista
+			-- 3
+			IF NOT EXISTS (SELECT id_producto FROM PRODUCTOS WHERE id_producto = (SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].producto')) AS json_producto)) THEN
+				SET @errIteracion = CONCAT(@errIteracion," Uno de los productos que trataste de ingresar (ingresado en la posicion ",i,") tiene un id inexistente y será borrado. ");
+				SELECT @errIteracion;
 			ELSE
-				SET i = 0;
-				WHILE i<n DO
-				-- 3
-				IF NOT EXISTS (SELECT id_producto FROM PRODUCTOS WHERE id_producto = (SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].producto')) AS json_producto)) THEN
-				SET json_pedido = JSON_REMOVE(json_pedido,concat('$[',i,'].producto'),concat('$[',i,'].cantidad'));
-				SET @err = "uno de los productos que trataste de ingresar tiene un id inexistente y será borrado";
+				-- Verifico que la cantidad solicitada no sea = 0 o que el producto no tenga stock = 0
+				-- 4
+				IF (SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].cantidad'))= 0) THEN 
+					SET @errIteracion=concat(@errIteracion," Uno de los productos solicitados (en la posicion ",i,") tenia cantidad 0 y fue borrado del pedido. ");
+					SELECT @errIteracion;
 				ELSE
-					-- 4
-					IF ((SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].cantidad'))= 0) OR ((SELECT stock FROM PRODUCTOS WHERE 
-					id_producto = (SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].producto')) AS json_producto)=0))) THEN 
-					SET json_pedido = JSON_REMOVE(json_pedido,concat('$[',i,'].producto'),concat('$[',i,'].cantidad'));
-					SET @err="Uno de los productos solicitados tenia cantidad 0 y fue borrado del pedido";
-					-- cierro 4
+					-- 4.a
+					IF ((SELECT stock FROM PRODUCTOS WHERE id_producto = (SELECT JSON_EXTRACT(json_pedido,concat('$[',i,'].producto')) AS json_producto))=0) THEN 
+						SET @errIteracion=concat(@errIteracion," Uno de los productos solicitados (en la posicion ",i,") tenia stock 0 y fue borrado del pedido. ");
+						SELECT @errIteracion;
+					-- cierro 4.a
 					END IF;
-				-- cierro 3
+				-- cierro 4
 				END IF;
-				SET i=i+1;
-			END WHILE;
-			SELECT @err;
-			-- 5
-			IF @err ='' THEN
-				INSERT INTO PEDIDOS (fk_id_cliente, fk_id_estado, fecha_pedido, fecha_entrega, fecha_efectiva_entrega)
-				VALUES (IDcliente, "HEC", CURDATE(),CURDATE(),NULL);
-				INSERT INTO DETALLE_PEDIDOS (fk_id_producto, cantidad,fk_id_pedido ) (SELECT *,@idNuevoPedido FROM JSON_TABLE(json_pedido,"$[*]" COLUMNS (fk_id_producto INT PATH "$.producto", cantidad INT PATH "$.cantidad")) AS detalles_json);
-				SELECT @msj;
-				ELSE
-					SELECT @err;
-			-- cierro 5
+			-- cierro 3
 			END IF;
-		-- cierro 2	
+			SET i=i+1;
+		END WHILE;
+		-- Borro los objetos del json que no cumplieron con las consignas
+		
+		SET n=JSON_LENGTH(json_pedido);
+		-- Verifico la longitud del carrito luego de las transformaciones
+		IF (n=0) THEN 
+		SET @err = "El carrito quedó vacío luego de las transformaciones";
+		SELECT @err;
 		END IF;
-	-- cierro 1
+		-- cierro 2	
 	END IF;
+-- cierro 1
+END IF;
+		-- 5
+		IF @err ='' THEN
+			INSERT INTO PEDIDOS (fk_id_cliente, fk_id_estado, fecha_pedido, fecha_entrega, fecha_efectiva_entrega)
+			VALUES (IDcliente, "HEC", CURDATE(),CURDATE(),NULL);
+			INSERT INTO DETALLE_PEDIDOS (fk_id_producto, cantidad,fk_id_pedido ) (SELECT *,@idNuevoPedido FROM JSON_TABLE(json_pedido,"$[*]" COLUMNS (fk_id_producto INT PATH "$.producto", cantidad INT PATH "$.cantidad")) AS detalles_json);
+			SELECT @msj;
+			SELECT @errIteracion;
+		ELSE
+			SELECT @err;
+		-- cierro 5
+		END IF;
+	
 END $$
 
 -- --------------------------------------
@@ -380,7 +403,7 @@ END $$
 -- Los parámetros de entrada son 
 -- 1) el id del reparto;
 -- 2) el id del chofer; 
--- 3) una variable que representa el momento en que se carga el kilomentraje (si momento = INI, significa que se cargan los km al comienzo del viaje; si momento = FIN, los km son al final del viaje. Para que sean válidos, FIN > INI) y finalmente 
+-- 3) una variable que representa el momento en que se carga el kilomentraje (si momento = INI, significa que se cargan los km al comienzo del viaje; si momento = FIN, los km son al final del viaje. Para que sean válidos, FIN > INI) 
 -- 4) los km que marca el odómetro del vehículo en el momento de cargar los datos
 
 DROP PROCEDURE IF EXISTS sp_cargar_km;

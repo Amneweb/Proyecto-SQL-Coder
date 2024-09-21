@@ -77,12 +77,16 @@ Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reempl
 
 # Esquema básico de evaluación del proyecto
 
-Los scripts sql para probar el proyecto se encuentran en la carpeta WindwardDB y se deben correr en el siguiente orden:
-- schema.sql - contiene la generación y modificación de tablas
-- datos.sql - carga los datos en las tablas
-- procedures.sql - contiene los triggers, funciones y stored procedures
-- functions.sql - contiene las funciones
-- views.sql - contiene las vistas
+> [!NOTE]  
+> Los scripts sql para probar el proyecto se encuentran en la carpeta WindwardDB y se deben correr en el siguiente orden:
+> - schema.sql - contiene la generación y modificación de tablas
+> - datos.sql - carga los datos en las tablas
+> - procedures.sql - contiene los triggers, funciones y stored procedures
+> - functions.sql - contiene las funciones
+> - views.sql - contiene las vistas
+
+
+
 Cada uno de los archivos de procedures, functions y views contiene la descripción del proceso, función o vista correspondiente, las tablas que involucran y lo que se quiere obtener.
 
 ### Archivo *snippets.sql*
