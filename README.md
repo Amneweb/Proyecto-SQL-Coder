@@ -26,6 +26,7 @@ Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una 
 
 ### Solución propuesta
 ![Banner Mock App](AppMockLand.jpg)
+
 **Elaborar una app de gestión online (de la cual este proyecto consistirá sólo en la base de datos) que permita:**
 
 - **A los clientes:** armar sus pedidos directamente y sin errores, conociendo los precios y el total de la compra al armar el carrito
@@ -49,13 +50,16 @@ Hay gran cantidad de procedimientos nuevos y mejoras que se podrían sumar a la 
 - **STOCK:**
 Cuando un producto determinado llega a un mínimo de stock, el sistema envía una alerta a los administradores.
 
+- **ESTADOS DE CUENTA:**
+Como se mencionó más arriba, se podría relacionar la app con el ERM para obtener el estado de cuenta de cada cliente de manera que, al momento de generar la orden, cada cliente pueda ver su cuenta corriente y conocer el saldo total (deuda más pedido nuevo).
+
 - **GARANTÍAS:**
 Los productos tienen garantía de 1 año y la gestión actual es muy "manual" y conlleva muchos errores: Los choferes reciben los productos que supuestamente están en garantía y los traen al depósito, donde se evalúa si corresponde o no la garantía. Si no corresponde, se devuelven; si corresponde, se almancenan hasta el momento de llevar a la fábrica. 
 Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reemplazados por la app, de la siguiente manera:
-  - El chofer ingresa en la app que recibió el producto en garantía
-  - El encargado de depósito marca en la app si el producto es válido como garantía o si se devuelve
-  - Si se devuelve, cuando el cliente que envió la garantía hace un nuevo pedido, el sistema avisa que hay una devolución pendiente y la carga automáticamente en el reparto
-  - Si no se devuelve, se marca en la app los datos por lo que se aceptó la garantía, el cliente, la marca, etc y una vez que el cliente genera un nuevo pedido, el sistema agrega al pedido la garantia a reponer
+  - El chofer ingresa en la app que recibió el producto en garantía;
+  - El encargado de depósito marca en la app si el producto es válido como garantía o si se devuelve;
+  - Si se devuelve, cuando el cliente que envió la garantía hace un nuevo pedido, el sistema avisa que hay una devolución pendiente y la carga automáticamente en el reparto;
+  - Si no se devuelve, se marca en la app los datos por lo que se aceptó la garantía, el cliente, la marca, etc (datos que se guardan para el momento en que se envían las garantías a fábrica) y una vez que el cliente genera un nuevo pedido, el sistema agrega al pedido la garantia a reponer.
 
 # Tecnologías usadas
 
