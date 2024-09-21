@@ -58,6 +58,8 @@ Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reempl
   - Si no se devuelve, se marca en la app los datos por lo que se aceptó la garantía, el cliente, la marca, etc y una vez que el cliente genera un nuevo pedido, el sistema agrega al pedido la garantia a reponer
 
 # Tecnologías usadas
+<img src="1.png" width="20">
+
 ![Logo Git](2.png) Git: para control de versiones de los archivos
 
 ![Logo Github](3.png) Github: como repositorio de la rama principal y la rama de desarrollo
