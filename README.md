@@ -1,5 +1,5 @@
 # PROYECTO CURSO SQL DE CODERHOUSE
-![Banner Introducción Readme](bannerSQL.png)
+![Banner Introducción Readme](bannerSQL.jpg)
 Bienvenidos a "WINDWARD-APP", sistema de gestión online para una distribuidora mayorista (ficticia) de baterías para vehículos, que cuenta con una flota propia de camionetas para reparto.
 Este proyecto trata de la base de datos, con sus procedimientos y funciones, para mejorar el sistema de órdenes de pedidos y logística de entrega. 
 
