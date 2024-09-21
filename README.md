@@ -58,12 +58,17 @@ Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reempl
   - Si no se devuelve, se marca en la app los datos por lo que se aceptó la garantía, el cliente, la marca, etc y una vez que el cliente genera un nuevo pedido, el sistema agrega al pedido la garantia a reponer
 
 # Tecnologías usadas
-- Git: para control de versiones de los archivos
-- Github: como repositorio de la rama principal y la rama de desarrollo
-- Visual Studio Code: para escribir el código y manipular las ramas desde su terminal
-- Miro: para el diagrama E-R 
-- WorkBench: como gestor de base de datos
-- Google sheets: para las tablas
+![Logo Git](2.png) Git: para control de versiones de los archivos
+
+![Logo Github](3.png) Github: como repositorio de la rama principal y la rama de desarrollo
+
+![Logo VS Code](1.png) Visual Studio Code: para escribir el código y manipular las ramas desde su terminal
+
+![Logo Miro](5.png) Miro: para el diagrama E-R 
+
+![Logo Workbench](6.png) WorkBench: como gestor de base de datos
+
+![Logo Google Sheets](4.png) Google sheets: para las tablas
 
 # Esquema básico de prueba para la segunda entrega
 
