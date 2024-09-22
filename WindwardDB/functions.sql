@@ -71,3 +71,34 @@ END IF;
 END WHILE;
 RETURN id_seleccionado; 
 END $$
+
+-- ---------------------???????????????
+-- opcion 2
+-- ---------------------------
+DROP FUNCTION IF EXISTS fn_confirmar_vehiculo;
+DELIMITER $$
+CREATE FUNCTION `fn_confirmar_vehiculo`(IDlibre INT,peso FLOAT, volumen FLOAT, cantidad INT) RETURNS VARCHAR(6)
+    READS SQL DATA
+BEGIN
+DECLARE maxVolumen INT DEFAULT 0;
+DECLARE maxPeso INT DEFAULT 0;
+DECLARE maxCantidad INT DEFAULT 0;
+
+
+SELECT max_peso, max_volumen, max_cantidades, id_vehiculo  FROM VEHICULOS v WHERE id_vehiculo = IDlibre INTO maxPeso, maxVolumen, maxCantidad;
+-- Empieza primer verificacion con el peso
+IF (peso > maxPeso) THEN
+RETURN "NOTOK";
+ELSE
+    IF (volumen > maxVolumen) THEN
+    RETURN "NOTOK";
+    ELSE
+        IF (cantidad > maxCantidad) THEN
+        RETURN "NOTOK";
+        ELSE
+          RETURN "OK";
+        END IF;
+    END IF;
+END IF;
+
+END $$

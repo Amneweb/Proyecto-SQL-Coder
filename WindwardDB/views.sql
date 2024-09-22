@@ -85,7 +85,7 @@ SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedi
 -- -----------------------------------------------------------------
 -- Vista intermedia para definir el reparto de una fecha determinada
 -- -----------------------------------------------------------------
-CREATE OR REPLACE VIEW repartos_por_fecha AS (SELECT id_reparto, fk_id_vehiculo FROM REPARTOS WHERE fecha = fn_generar_fecha_reparto(@fecha))
+CREATE OR REPLACE VIEW repartos_por_fecha AS (SELECT id_reparto, fk_id_vehiculo FROM REPARTOS WHERE fecha = fn_generar_fecha_reparto(@fecha));
 
 -- -----------------------------------------------------------------
 -- Vista para obtener los vehiculos aun no asignados a repartos
@@ -105,5 +105,15 @@ SET @fecha='2024-08-31';
 SET @zona = 2;
 SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = @zona AND p.fecha_pedido = @fecha;
 
+SET @fecha='2024-08-31';
+SET @zona = 2;
+SELECT r.id_reparto, r.fk_id_zona, r.fecha, cz.fk_id_cliente,cz.id_pedido,pc.sku,pc.cantidad FROM REPARTOS r INNER JOIN (SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido, p.id_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = @zona AND p.fecha_pedido = @fecha) AS cz ON r.fk_id_zona = cz.fk_zona INNER JOIN pedido_cliente pc ON cz.fk_id_cliente = pc.id_cliente;
 
-SELECT r.id_reparto, r.fk_id_zona, r.fecha, cz.fk_id_cliente,cz.id_pedido,pc.sku,pc.cantidad FROM REPARTOS r INNER JOIN (SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido, p.id_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = @zona AND p.fecha_pedido = @fecha) AS cz ON r.fk_id_zona = cz.fk_zona INNER JOIN pedido_cliente pc ON cz.fk_id_cliente = pc.id_cliente
+SET @fecha='2024-08-31';
+SET @zona = 2;
+SELECT r.id_reparto, r.fk_id_zona, r.fecha, cz.fk_id_cliente,cz.id_pedido,pc.sku,pc.cantidad FROM REPARTOS r INNER JOIN (SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido, p.id_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = @zona AND p.fecha_pedido = @fecha) AS cz ON r.fk_id_zona = cz.fk_zona INNER JOIN pedido_cliente pc ON cz.fk_id_cliente = pc.id_cliente;
+
+SET @fecha='2024-08-31';
+SET @zona = 2;
+SELECT id_reparto, fk_id_zona, sku, SUM(cantidad) FROM (SELECT r.id_reparto, r.fk_id_zona, r.fecha, cz.fk_id_cliente,cz.id_pedido,pc.sku,pc.cantidad FROM REPARTOS r INNER JOIN (SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido, p.id_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = @zona AND p.fecha_pedido = @fecha) AS cz ON r.fk_id_zona = cz.fk_zona INNER JOIN pedido_cliente pc ON cz.fk_id_cliente = pc.id_cliente) AS detalle_repartos GROUP BY sku;
+

@@ -41,7 +41,13 @@ Se muestra el "rendimiento" del recorrido de cada vehiculo teniendo en cuenta lo
 - Baterias/zona: para evaluar la zona con mas compras en un determinado periodo de tiempo
 - Baterias/kilometro: (para cada cliente) para evaluar si conviene llevar las baterías a los clientes de más lejos, en funcion de las baterías que compra "por kilómetro". 
 # A futuro
+En lo que al código actual se refiere, quedan por mejorar varios aspectos, entre ellos: 
+- La generación de los repartos automáticamente para todas las zonas y la eventual división de un reparto en varios mas chicos, si es que el peso o las cantidades de una zona son mayores a las máximas por vehículo. 
+- La asignación de un chofer por vehículo
+
 Hay gran cantidad de procedimientos nuevos y mejoras que se podrían sumar a la app de gestión. Algunos de ellos podrían ser:
+- **HOJA DE RUTA:**
+Se podría generar una hoja de ruta de manera que el chofer siga el recorrido indicado en la misma, en lugar de que sea él mismo quien decida el orden en que tiene que ir haciendo las entregas.
 
 - **STOCK:**
 Cuando un producto determinado llega a un mínimo de stock, el sistema envía una alerta a los administradores.

@@ -320,42 +320,6 @@ IF EXISTS (SELECT id_pedido,fk_id_estado FROM PEDIDOS WHERE id_pedido=IDpedido A
     SELECT @err;
 END $$
 
--- ----------------------------------
--- SP sp_generar_reparto
--- ----------------------------------
--- En base a la tabla provisoria totales_por_fecha, se llama a la función que selecciona un vehículo para una determinada zona y se genera un reparto. Esto debería hacerse automáticamente para todas las zonas que tengan pedidos en el día en cuestión.
-
-DROP PROCEDURE IF EXISTS sp_generar_reparto;
-DELIMITER $$
-CREATE PROCEDURE `sp_generar_reparto`(IN IDzona INT, IN fecha_elegida DATE)
-BEGIN
-DECLARE var_vehiculo INT;
-DECLARE var_zona INT;
-DECLARE var_fecha DATE;
-
-CALL sp_generar_totales_por_fecha(fecha_elegida);
-
-SELECT fn_seleccionar_vehiculo(fecha_elegida,`peso total`, `volumen total`,`cantidad total`) AS 'vehiculo' FROM totales_por_fecha WHERE zona=IDzona ORDER BY `peso total` ASC INTO var_vehiculo;
-INSERT INTO REPARTOS VALUES (NULL,var_vehiculo,1,IDzona,fecha_elegida, NULL, NULL);
-DROP TABLE IF EXISTS totales_por_fecha;
-END $$
-
-
--- ----------------------------------
--- SP sp_generar_totales_por_fecha
--- ----------------------------------
--- SP para generar una tabla (que luego se borra) que contiene los totales de peso, volumen y cantidad agrupados por zona para una determinada fecha. Este SP es llamado por el sp que genera los repartos y al final del mismo, se borra la tabla. Lo hice con EXECUTE porque no me dejaba usar una variable en el WHERE del select.
-
-DROP PROCEDURE IF EXISTS sp_generar_totales_por_fecha;
-DELIMITER $$
-CREATE PROCEDURE `sp_generar_totales_por_fecha` (IN fecha_elegida DATE)
-BEGIN
-DROP TABLE IF EXISTS totales_por_fecha;
-SET @sql = CONCAT('CREATE TABLE totales_por_fecha (SELECT zona, fecha, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones WHERE fecha="',fecha_elegida,'" GROUP BY zona)');
-PREPARE sentencia FROM @sql;
-EXECUTE sentencia;
-DEALLOCATE PREPARE sentencia;
-END $$
 
 -- ------------------------------------------
 -- SP sp_detalle_repartos
@@ -373,68 +337,73 @@ DEALLOCATE PREPARE sentencia;
 END $$
 
 
--- ----------------------------------------
--- SP sp_repartos_por_fecha
--- ----------------------------------------
--- Procedimiento que crea una vista de repartos filtrados por fecha
-DROP PROCEDURE IF EXISTS sp_repartos_por_fecha;
+
+-- ----------------------------------
+-- SP sp_totales_por_fecha
+-- ----------------------------------
+DROP PROCEDURE IF EXISTS sp_totales_por_fecha;
 DELIMITER $$
-CREATE PROCEDURE `sp_repartos_por_fecha` (IN fecha_elegida DATE)
+CREATE PROCEDURE `sp_totales_por_fecha`(IN fecha_elegida DATE)
 BEGIN
-SET @sql = CONCAT('CREATE OR REPLACE VIEW repartos_por_fecha AS (SELECT id_reparto, fk_id_vehiculo FROM REPARTOS WHERE fecha = ',fecha_elegida,')');
+DROP TABLE IF EXISTS totales_por_fecha;
+SET @sql = CONCAT('CREATE TEMPORARY TABLE totales_por_fecha (SELECT zona, fecha, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones WHERE fecha="',fecha_elegida,'" GROUP BY zona order by sum(peso_total))');
 PREPARE sentencia FROM @sql;
 EXECUTE sentencia;
 DEALLOCATE PREPARE sentencia;
-END $$
+END $$;
 
--- -----------------------------------
--- SP sp_vehiculos_libres
--- -----------------------------------
--- Procedimiento para crear una vista con los vehiculos que aun no han sido asignados a los repartos de una fecha determinada
-DROP PROCEDURE IF EXISTS sp_vehiculos_libres;
+-- ----------------------------------
+-- SP sp_generar_reparto
+-- ----------------------------------
+-- A este procedimiento se lo llama por zona y por fecha y asigna un vehículo en función del peso máximo y del peso total de las órdenes para el día y la zona correspondientes (A futoro: me queda por programar que haya que llamarlo una sola vez y que itere por zona, estuve intentando pero se me hizo complicado y decidí dejarlo así) - ATENCION: antes de llamar a este sp, hay que asegurarse de que hayamos llamado al sp que genera la tabla totales_por_fecha.
+-- Pasos del SP
+-- 1) Genera una tabla repartos_por_fecha, en la que se filtran los repartos en base a la fecha elegida. 
+-- 2) Se verifica que la zona no tenga ningún reparto asignado. Si es así, se genera un mensaje de error
+-- 3) Se seleccionan los "vehículos libres", es decir aquéllos que aun no han sido designados a ningun reparto en la fecha. Esto se hace con un left join entre vehiculos y repartos_por_fecha.
+-- 4) Se itera la tabla de vehiculos libres, comparando el peso maximo de dichos vehiculos con el peso de las ordenes de la zona
+-- 5) En cuanto hay un vehiculo que cumple con la condición, se lo asigna a la zona y se genera el reparto
+-- 6) Si ningún vehiculo cumple, se genera un error
+
+DROP PROCEDURE IF EXISTS sp_generar_reparto;
 DELIMITER $$
-CREATE PROCEDURE `sp_vehiculos_libres` ()
+CREATE PROCEDURE `sp_generar_reparto`(IN IDzona INT, IN fecha_elegida DATE)
 BEGIN
-CREATE OR REPLACE VIEW vehiculos_libres AS (SELECT vl.id_vehiculo AS id_libres
+DECLARE IDlibre INT;
+DECLARE peso FLOAT;
+DECLARE j INT;
+DECLARE k INT;
+
+DROP TABLE IF EXISTS repartos_por_fecha;
+SET @sql = CONCAT('CREATE TEMPORARY TABLE repartos_por_fecha (SELECT id_reparto, fk_id_vehiculo, fk_id_zona FROM REPARTOS WHERE fecha = "',fecha_elegida,'")');
+PREPARE sentencia FROM @sql;
+EXECUTE sentencia;
+DEALLOCATE PREPARE sentencia;
+SET peso = (SELECT `peso total` FROM totales_por_fecha WHERE zona = IDzona);
+IF NOT EXISTS (SELECT fk_id_zona FROM repartos_por_fecha WHERE fk_id_zona = IDzona) THEN
+DROP TABLE IF EXISTS vehiculos_libres;
+CREATE TEMPORARY TABLE vehiculos_libres (SELECT vl.id_vehiculo
 FROM VEHICULOS vl
 LEFT JOIN repartos_por_fecha vr
       ON vl.id_vehiculo = vr.fk_id_vehiculo
-      WHERE fk_id_vehiculo IS NULL)
-
-END $$
-
--- ----------------------------------
--- SP sp_generar_repartos
--- ----------------------------------
--- En base a la tabla provisoria totales_por_fecha, se llama a la función que selecciona un vehículo para una determinada zona y se genera un reparto. Esto debería hacerse automáticamente para todas las zonas que tengan pedidos en el día en cuestión.
-
-DROP PROCEDURE IF EXISTS sp_generar_repartos;
-DELIMITER $$
-CREATE PROCEDURE `sp_generar_repartos`(IN fecha_elegida DATE)
-BEGIN
-DECLARE var_vehiculo INT;
-DECLARE IDzona INT;
-DECLARE var_fecha DATE;
-DECLARE i INT;
-DECLARE n INT;
-
-CALL sp_generar_totales_por_fecha(fecha_elegida);
-CALL sp_repartos_por_fecha(fecha_elegida);
-
-SET n = (select count(*) from totales_por_fecha);
-SET i = 0;
-
-WHILE i < n DO
-SET IDzona = (SELECT zona FROM totales_por_fecha LIMIT i,1);
-CALL sp_vehiculos_libres();
-SELECT fn_seleccionar_vehiculo(`peso total`, `volumen total`,`cantidad total`) AS 'vehiculo' FROM totales_por_fecha WHERE zona=IDzona ORDER BY `peso total` ASC INTO var_vehiculo;
-INSERT INTO REPARTOS VALUES (NULL,var_vehiculo,1,IDzona,fecha_elegida,NULL, NULL);
-SET i = i + 1;
-END WHILE;
-
-DROP TABLE IF EXISTS totales_por_fecha;
-DROP VIEW IF EXISTS repartos_por_fecha;
-DROP VIEW IF EXISTS vehiculos_libres;
+      WHERE fk_id_vehiculo IS NULL);
+	  SET k = (SELECT COUNT(*) FROM vehiculos_libres);
+SET j=0;
+SET @err = '';
+iterar_vehiculos_libres: WHILE j < k DO
+SELECT * FROM vehiculos_libres LIMIT j,1 INTO IDlibre;
+SELECT IDlibre; 
+IF ((SELECT max_peso FROM VEHICULOS v WHERE v.id_vehiculo = IDlibre)>peso) THEN
+INSERT INTO REPARTOS VALUES (NULL,IDlibre,1,IDzona,fecha_elegida,NULL, NULL);
+LEAVE iterar_vehiculos_libres;
+ELSE
+SET @err = CONCAT(@err," El vehiculo con id ",IDlibre," no se pudo seleccionar porque su peso maximo es menor que el de la zona");
+END IF;
+SET j = j + 1;
+END WHILE iterar_vehiculos_libres; 
+ELSE
+SET @err = "La zona ya tiene un reparto asignado. Para seleccionar otro vehiculo, ir al procedimiento correspondiente";
+END IF;
+IF (@err <>'') THEN SELECT @err;  END IF;
 END $$
 
 -- ----------------------------------
