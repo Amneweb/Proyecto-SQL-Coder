@@ -1,5 +1,5 @@
 -- ----------------------------------------
--- VISTA pedidos_detallados
+-- VISTA vw_pedidos_detallados
 -- ----------------------------------------
 
 -- Vista que muestra el listado de pedidos ordenado por pedido, incluyendo el detalle 'producto - cantidad'
@@ -13,7 +13,7 @@ CREATE OR REPLACE VIEW pedidos_detallados AS
 
 -- 1) TODOS LOS CLIENTES
 
-SELECT * FROM pedidos_detallados;
+SELECT * FROM vw_pedidos_detallados;
 
 -- 2) UN CLIENTE (usando una variable)
 
@@ -80,9 +80,8 @@ SET @cliente = 1;
 SET @fecha_pedido = "2024-08-31";
 SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedido;
 
--- Con un aggregate y GROUP BY se puede obtener el total de todos los pedidos agrupados por cliente para una determinada fecha
+-- Ver más opciones de resultados obtenidos con esta vista en el archivo snippets
 
-SELECT id_cliente,razon_social, SUM(Total_renglon) AS "Total pedido" FROM pedido_cliente WHERE fecha = @fecha_pedido GROUP BY id_cliente;
 
 -- CREATE OR REPLACE VIEW vehiculos_zonas AS 
 -- (SELECT t.*, v.apodo, v.max_volumen,v.max_cantidades,v.max_peso FROM totales_por_fecha t JOIN VEHICULOS v ORDER BY zona ASC, max_peso ASC);

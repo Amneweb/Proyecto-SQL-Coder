@@ -31,6 +31,17 @@ SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 -- 4) Volvemos a ver la tabla detalle de pedidos, ahora actualizada con el pedido nuevo
 SELECT * FROM DETALLE_PEDIDOS;
 
+-- 5) Para probar diferentes causas de error
+
+-- 5.a Json vacío
+CALL sp_generar_pedidos (7, '[]');
+-- 5.b Json con objetos vacíos
+CALL sp_generar_pedidos (7, '[{},{}]');
+-- 5.c Varios productos, uno de los cuales tiene cantidad 0
+CALL sp_generar_pedidos (9, '[{"producto":7,"cantidad":0},{"producto":1,"cantidad":3},{"producto":4,"cantidad":20},{"producto":3,"cantidad":5}]');
+-- 5.d Todos los objetos tienen errores: el primero tiene un producto que no existe, el segundo tiene cantidad 0 y el tercero es un producto con stock 0
+CALL sp_generar_pedidos (9, '[{"producto":25,"cantidad":1},{"producto":1,"cantidad":0},{"producto":2,"cantidad":20}]');
+
 -- ---------------------------------------------------------------------------------
 -- Hacer un pedido en que la cantidad de uno de los productos es mayor que el stock
 -- ---------------------------------------------------------------------------------
@@ -51,6 +62,7 @@ SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 -- Volvemos a ver el stock de los productos, que aun no cambió a pesar de los pedidos, porque recién se modifica cuando el pedido pasa a estado aprobado. (Ver más abajo el código correspondiente a este proceso - linea 144) 
 
 SELECT id_producto, nombre, stock FROM PRODUCTOS;
+
 
 -- ------------------------------------------------------------
 -- Modificar pedido 4, cambiando la cantidad del producto 2.
@@ -124,7 +136,7 @@ SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedi
 
 -- Total del pedido
 
-SELECT razon_social,SUM(Total_renglon) AS "Total pedido" FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedido GROUP BY id_cliente;
+SELECT razon_social,SUM(Total_renglon) AS "Total pedido", SUM(cantidad) AS "Total cantidades" FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedido GROUP BY id_cliente;
 
 
 -- **************************************************
@@ -154,10 +166,11 @@ SELECT dp.*, p.stock FROM DETALLE_PEDIDOS dp INNER JOIN PRODUCTOS p ON dp.fk_id_
 SELECT * FROM pedidos_detallados;
 
 -- -----------------------------------------------------------------------
--- Total de cada pedido para una determinada fecha
+-- Total de cada cliente para una determinada fecha
 -- -----------------------------------------------------------------------
 
-SELECT id_cliente,razon_social, SUM(Total_renglon) AS "Total pedido" FROM pedido_cliente WHERE fecha = @fecha_pedido GROUP BY id_cliente;
+SELECT id_cliente,razon_social, SUM(Total_renglon) AS "Total pedido", SUM(cantidad) AS "Total cantidades" FROM pedido_cliente WHERE fecha = @fecha_pedido GROUP BY id_cliente;
+
 
 -- ------------------------------------------------------------
 -- Ver productos con los precios para cada lista de precios

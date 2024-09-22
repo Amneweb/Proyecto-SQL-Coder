@@ -176,9 +176,9 @@ SELECT @msj;
 END IF;
 END $$
 
--- --------------------------------------
--- TRIGGERS tr_verificar_stock
--- --------------------------------------
+-- -----------------------------------------------
+-- TRIGGERS tr_verificar_stock al insertar datos
+-- -----------------------------------------------
 
 -- Este trigger es disparado justo antes de agregar un pedido a la tabla DETALLE_PEDIDOS. Para cada producto, verifica que la cantidad solicitada sea menor o igual a las existencias en stock. Si se solicitan más productos de los que hay en stock, en el pedido sólo se carga lo que hay en stock.
 
@@ -198,9 +198,9 @@ SET @msj="Los productos se agregaron sin problemas.";
 END IF;
 END$$
 
--- --------------------------------------
--- TRIGGERS tr_verificar_stock
--- --------------------------------------
+-- --------------------------------------------------
+-- TRIGGERS tr_verificar_stock al modificar pedidos
+-- --------------------------------------------------
 
 -- Este trigger es disparado justo antes de agregar un pedido a la tabla DETALLE_PEDIDOS. Para cada producto, verifica que la cantidad solicitada sea menor o igual a las existencias en stock. Si se solicitan más productos de los que hay en stock, en el pedido sólo se carga lo que hay en stock.
 
