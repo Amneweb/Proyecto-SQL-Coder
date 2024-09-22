@@ -27,6 +27,17 @@ NO SQL
 RETURN (peso*cantidad);
 
 -- --------------------------------------
+-- FUNCION fn_generar_variable_lista
+-- --------------------------------------
+
+-- Función para poder usar la variable id_lista en la vista de precios por lista en base al id del cliente (para poder usar el id del cliente como variable y no como valor fijo en la cláusula de WHERE)
+
+CREATE FUNCTION `fn_generar_fecha_reparto` (fecha DATE) RETURNS DATE
+NO SQL
+RETURN (fecha);
+
+
+-- --------------------------------------
 -- FUNCION fn_comparar_maximos
 -- --------------------------------------
 DROP FUNCTION IF EXISTS fn_seleccionar_vehiculo;
@@ -40,16 +51,18 @@ DECLARE maxCantidad INT DEFAULT 0;
 DECLARE id_seleccionado INT DEFAULT 0;
 DECLARE n INT DEFAULT 0;
 DECLARE i INT DEFAULT 0;
-SET n = (SELECT COUNT(*) FROM VEHICULOS);
 SET i=0;
+SET @sql = NULL;
 
-if ((select count(*) from (SELECT id_reparto FROM REPARTOS WHERE fecha=fecha_reparto) as repartos)= 0) THEN
-SET @vehiculos_ya_asignados = 0;
-ELSE
-SET @vehiculos_ya_asignados = (SELECT GROUP_CONCAT(fk_id_vehiculo SEPARATOR ',') AS vehiculos FROM (SELECT * FROM REPARTOS WHERE fecha=fecha_reparto) as ids);
-END IF;
+-- vehiculos no seleccionados para repartos
+
+
+ SET n = (SELECT COUNT(*) FROM vehiculos_libres);
+
+
 WHILE i < n DO
-SELECT max_peso, max_volumen, max_cantidades, id_vehiculo  FROM VEHICULOS WHERE (FIND_IN_SET(id_vehiculo,@vehiculos_ya_asignados) = 0) ORDER BY max_peso ASC LIMIT i,1 INTO maxPeso, maxVolumen, maxCantidad,id_seleccionado;
+
+SELECT max_peso, max_volumen, max_cantidades, id_vehiculo  FROM VEHICULOS v INNER JOIN vehiculos_libres(fecha_reparto) as vl ON vl.id_libres = v.id_vehiculo ORDER BY max_peso ASC LIMIT i,1 INTO maxPeso, maxVolumen, maxCantidad,id_seleccionado;
 -- Empieza primer verificacion con el peso
 IF (peso > maxPeso) THEN
 SET i = i + 1;

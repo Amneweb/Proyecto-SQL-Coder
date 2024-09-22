@@ -82,6 +82,20 @@ SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedi
 
 -- Ver más opciones de resultados obtenidos con esta vista en el archivo snippets
 
+-- -----------------------------------------------------------------
+-- Vista intermedia para definir el reparto de una fecha determinada
+-- -----------------------------------------------------------------
+CREATE OR REPLACE VIEW repartos_por_fecha AS (SELECT id_reparto, fk_id_vehiculo FROM REPARTOS WHERE fecha = fn_generar_fecha_reparto(@fecha))
+
+-- -----------------------------------------------------------------
+-- Vista para obtener los vehiculos aun no asignados a repartos
+-- -----------------------------------------------------------------
+
+CREATE OR REPLACE VIEW vehiculos_libres AS (SELECT vl.id_vehiculo AS id_libres
+FROM VEHICULOS vl
+LEFT JOIN repartos_por_fecha vr
+      ON vl.id_vehiculo = vr.fk_id_vehiculo
+      WHERE fk_id_vehiculo IS NULL)
 
 -- CREATE OR REPLACE VIEW vehiculos_zonas AS 
 -- (SELECT t.*, v.apodo, v.max_volumen,v.max_cantidades,v.max_peso FROM totales_por_fecha t JOIN VEHICULOS v ORDER BY zona ASC, max_peso ASC);
