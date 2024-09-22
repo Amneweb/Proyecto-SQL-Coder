@@ -372,6 +372,37 @@ EXECUTE sentencia;
 DEALLOCATE PREPARE sentencia;
 END $$
 
+
+-- ----------------------------------------
+-- SP sp_repartos_por_fecha
+-- ----------------------------------------
+-- Procedimiento que crea una vista de repartos filtrados por fecha
+DROP PROCEDURE IF EXISTS sp_repartos_por_fecha;
+DELIMITER $$
+CREATE PROCEDURE `sp_repartos_por_fecha` (IN fecha_elegida DATE)
+BEGIN
+SET @sql = CONCAT('CREATE OR REPLACE VIEW repartos_por_fecha AS (SELECT id_reparto, fk_id_vehiculo FROM REPARTOS WHERE fecha = ',fecha_elegida,')');
+PREPARE sentencia FROM @sql;
+EXECUTE sentencia;
+DEALLOCATE PREPARE sentencia;
+END $$
+
+-- -----------------------------------
+-- SP sp_vehiculos_libres
+-- -----------------------------------
+-- Procedimiento para crear una vista con los vehiculos que aun no han sido asignados a los repartos de una fecha determinada
+DROP PROCEDURE IF EXISTS sp_vehiculos_libres;
+DELIMITER $$
+CREATE PROCEDURE `sp_vehiculos_libres` ()
+BEGIN
+CREATE OR REPLACE VIEW vehiculos_libres AS (SELECT vl.id_vehiculo AS id_libres
+FROM VEHICULOS vl
+LEFT JOIN repartos_por_fecha vr
+      ON vl.id_vehiculo = vr.fk_id_vehiculo
+      WHERE fk_id_vehiculo IS NULL)
+
+END $$
+
 -- ----------------------------------
 -- SP sp_generar_repartos
 -- ----------------------------------
@@ -388,18 +419,22 @@ DECLARE i INT;
 DECLARE n INT;
 
 CALL sp_generar_totales_por_fecha(fecha_elegida);
+CALL sp_repartos_por_fecha(fecha_elegida);
 
 SET n = (select count(*) from totales_por_fecha);
 SET i = 0;
 
 WHILE i < n DO
 SET IDzona = (SELECT zona FROM totales_por_fecha LIMIT i,1);
-SELECT fn_seleccionar_vehiculo(fecha_elegida,`peso total`, `volumen total`,`cantidad total`) AS 'vehiculo' FROM totales_por_fecha WHERE zona=IDzona ORDER BY `peso total` ASC INTO var_vehiculo;
+CALL sp_vehiculos_libres();
+SELECT fn_seleccionar_vehiculo(`peso total`, `volumen total`,`cantidad total`) AS 'vehiculo' FROM totales_por_fecha WHERE zona=IDzona ORDER BY `peso total` ASC INTO var_vehiculo;
 INSERT INTO REPARTOS VALUES (NULL,var_vehiculo,1,IDzona,fecha_elegida,NULL, NULL);
 SET i = i + 1;
 END WHILE;
 
 DROP TABLE IF EXISTS totales_por_fecha;
+DROP VIEW IF EXISTS repartos_por_fecha;
+DROP VIEW IF EXISTS vehiculos_libres;
 END $$
 
 -- ----------------------------------
