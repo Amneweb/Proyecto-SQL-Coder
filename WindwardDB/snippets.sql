@@ -204,7 +204,7 @@ CALL sp_pivot_listas();
 SELECT * FROM totales_por_fecha;
 
 -- -----------------------------------------------------------------------------------------
--- Modificaciones de estado de los pedidos 
+-- Ver cómo se fueron dando las odificaciones de estado de los pedidos 
 -- -----------------------------------------------------------------------------------------
 
 SELECT * FROM MODIFICACION_ESTADOS;
@@ -213,7 +213,7 @@ SELECT * FROM MODIFICACION_ESTADOS;
 -- Generación del reparto para una determinada zona (enviada al sp como parámetro)
 -- -----------------------------------------------------------------------------------------
 
-CALL sp_generar_reparto(2)
+CALL sp_generar_reparto(2, "2024-08-31")
 
 -- -----------------------------------------------------------------------------------------
 -- Insersión del kilometraje inicial o final de un reparto determinado

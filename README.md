@@ -36,6 +36,7 @@ Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una 
 - El sistema distribuirá los pedidos por días y zonas de entrega y armará la posible logística de entrega
 # Informes :chart_with_upwards_trend:
 A continuación se presentan algunos de los posibles informes generados con las tablas creadas para el proyecto. Los mismos son:
+- Totales - cantidades, pesos, volúmenes - por zona (se pueden filtrar por fecha)
 - Kilómetros/baterias: (en un periodo de tiempo determinado, que puede ser dia, semana o mes)
 Se muestra el "rendimiento" del recorrido de cada vehiculo teniendo en cuenta los kilómetros andados. Se puede evaluar si conviene hacer muchos viajes cortos o uno largo
 - Baterias/zona: para evaluar la zona con mas compras en un determinado periodo de tiempo
@@ -76,6 +77,7 @@ Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reempl
 <img src="6.png" width="20" alt="logo workbench"> **WorkBench:** como gestor de base de datos
 
 <img src="4.png" width="20" alt="logo google sheets"> **Google sheets:** para la descripción de las tablas
+... Lápiz y papel :sweat_smile:
 
 # Esquema básico de evaluación del proyecto
 
@@ -87,12 +89,25 @@ Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reempl
 > - functions.sql - contiene las funciones
 > - views.sql - contiene las vistas
 
-
-
 Cada uno de los archivos de procedures, functions y views contiene la descripción del proceso, función o vista correspondiente, las tablas que involucran y lo que se quiere obtener.
 
 ### :teacher: Archivo *snippets.sql*
 Este archivo contiene líneas de comando sugeridas para probar todos los procesos y funciones. Está dividido en líneas que ejecutan los procesos que seguiría un cliente, y líneas que ejecutan los procesos que utilizarían los administradores.
+
+## Un día con la APP
+Para entender a grandes rasgos la idea del funcionamiento de la app, a continuación se muestran los pasos que seguirían los clientes y administradores en un día cualquiera
+- 1) El cliente mira el catálogo de productos (con el precio que le corresponde según su lista de precios) (Vista "productos_con_precio")
+- 2) El cliente elige los productos y sus cantidades y arma el carrito de compras (Vista "pedidos_detallados")
+- 3) El cliente envía la orden de pedidos (Procedure "sp_generar_pedidos")
+- 4) El cliente ve su orden completa, con precios unitarios y el total (Vistas "pedidos_detallados" y "pedido_cliente")
+- 5) El cliente (también lo puede hacer un administrador) modifica o borra su pedido completo (Procesos "sp_modificar_pedido" o "sp_borrar_pedido")
+- 6) Los encargados de depósito modifican los estados de un pedido (dependiendo de si hay stock o no, cuando ya están cargados en los vehículos, etc - no programé todos los procesos de cambios de estado, sólo el de aprobado)
+- 7) Los administradores pasan el estado de cada pedido a Aprobado (Proceso "sp_aprobar_pedido", que modifica el stock de los productos y permite que cada pedido sea considerado para su inclusion en los repartos)
+- 8) Los administradores generan los repartos para cada zona, de manera que el sistema asigna un vehiculo a cada una (Proceso "sp_generar_reparto")
+- 9) Los choferes ingresan el kilometraje al comienzo de cada reparto (Proceso "sp_cargar_km")
+- 10) Una vez que el cliente recibe el pedido, los choferes pasan el estado del pedido a Entregado (proceso no programado)
+- 11) Los choferes ingresan el kilometraje al final de cada reparto (Proceso "sp_cargar_km")
+
 
 ### MANEJO DE ERRORES 
 Importante: NO todos los procesos y funciones tienen programado un manejo de errores, por lo que si se prueban los procesos con claves incorrectas o datos no válidos, podría haber errores, no por el proceso en sí, sino por los datos de entrada.

@@ -359,7 +359,7 @@ END $$;
 -- Pasos del SP
 -- 1) Genera una tabla repartos_por_fecha, en la que se filtran los repartos en base a la fecha elegida. 
 -- 2) Se verifica que la zona no tenga ningún reparto asignado. Si es así, se genera un mensaje de error
--- 3) Se seleccionan los "vehículos libres", es decir aquéllos que aun no han sido designados a ningun reparto en la fecha. Esto se hace con un left join entre vehiculos y repartos_por_fecha.
+-- 3) Se seleccionan los "vehículos libres", es decir aquéllos que aun no han sido asignados a ningun reparto en la fecha. Esto se hace con un left join entre vehiculos y repartos_por_fecha.
 -- 4) Se itera la tabla de vehiculos libres, comparando el peso maximo de dichos vehiculos con el peso de las ordenes de la zona
 -- 5) En cuanto hay un vehiculo que cumple con la condición, se lo asigna a la zona y se genera el reparto
 -- 6) Si ningún vehiculo cumple, se genera un error
