@@ -83,8 +83,6 @@ SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedi
 -- Ver más opciones de resultados obtenidos con esta vista en el archivo snippets
 
 
--- CREATE OR REPLACE VIEW vehiculos_zonas AS 
--- (SELECT t.*, v.apodo, v.max_volumen,v.max_cantidades,v.max_peso FROM totales_por_fecha t JOIN VEHICULOS v ORDER BY zona ASC, max_peso ASC);
 
 
 SET @fecha='2024-08-31';
