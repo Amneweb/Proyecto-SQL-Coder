@@ -83,6 +83,13 @@ SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedi
 -- Ver más opciones de resultados obtenidos con esta vista en el archivo snippets
 
 
+-- ------------------------------------
+-- Vista totales
+-- ------------------------------------
+-- Se obtienen los totales de peso, volumen y cantidad agrupados por zona y por fecha
+
+CREATE OR REPLACE VIEW totales AS (SELECT zona, fecha, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones  GROUP BY fecha, zona order by fecha);
+
 
 
 SET @fecha='2024-08-31';

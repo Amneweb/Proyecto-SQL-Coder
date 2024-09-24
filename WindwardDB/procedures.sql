@@ -337,25 +337,10 @@ DEALLOCATE PREPARE sentencia;
 END $$
 
 
-
--- ----------------------------------
--- SP sp_totales_por_fecha
--- ----------------------------------
-DROP PROCEDURE IF EXISTS sp_totales_por_fecha;
-DELIMITER $$
-CREATE PROCEDURE `sp_totales_por_fecha`(IN fecha_elegida DATE)
-BEGIN
-DROP TABLE IF EXISTS totales_por_fecha;
-SET @sql = CONCAT('CREATE TEMPORARY TABLE totales_por_fecha (SELECT zona, fecha, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones WHERE fecha="',fecha_elegida,'" GROUP BY zona order by sum(peso_total))');
-PREPARE sentencia FROM @sql;
-EXECUTE sentencia;
-DEALLOCATE PREPARE sentencia;
-END $$;
-
 -- ----------------------------------
 -- SP sp_generar_reparto
 -- ----------------------------------
--- A este procedimiento se lo llama por zona y por fecha y asigna un vehículo en función del peso máximo y del peso total de las órdenes para el día y la zona correspondientes (A futoro: me queda por programar que haya que llamarlo una sola vez y que itere por zona, estuve intentando pero se me hizo complicado y decidí dejarlo así) - ATENCION: antes de llamar a este sp, hay que asegurarse de que hayamos llamado al sp que genera la tabla totales_por_fecha.
+-- A este procedimiento se lo llama por zona y por fecha y asigna un vehículo en función del peso máximo y del peso total de las órdenes para el día y la zona correspondientes (A futoro: me queda por programar que haya que llamarlo una sola vez y que itere por zona, estuve intentando pero se me hizo complicado y decidí dejarlo así)
 -- Pasos del SP
 -- 1) Genera una tabla repartos_por_fecha, en la que se filtran los repartos en base a la fecha elegida. 
 -- 2) Se verifica que la zona no tenga ningún reparto asignado. Si es así, se genera un mensaje de error
@@ -378,7 +363,7 @@ SET @sql = CONCAT('CREATE TEMPORARY TABLE repartos_por_fecha (SELECT id_reparto,
 PREPARE sentencia FROM @sql;
 EXECUTE sentencia;
 DEALLOCATE PREPARE sentencia;
-SET peso = (SELECT `peso total` FROM totales_por_fecha WHERE zona = IDzona);
+SET peso = (SELECT `peso total` FROM totales WHERE zona = IDzona AND fecha = fecha_elegida);
 IF NOT EXISTS (SELECT fk_id_zona FROM repartos_por_fecha WHERE fk_id_zona = IDzona) THEN
 DROP TABLE IF EXISTS vehiculos_libres;
 CREATE TEMPORARY TABLE vehiculos_libres (SELECT vl.id_vehiculo
@@ -450,4 +435,34 @@ ELSE
 SET err='Los datos se cargaron con éxito';
 SELECT err;
 END IF;
+END $$
+
+
+-- --------------------------------------
+-- SP sp_pivot_listas
+-- --------------------------------------
+
+-- SP que genera una vista de los productos con sus precios, trasponiendo la vista productos_con_precios dinámicamente.
+
+-- -----------------------------------------
+-- SP sp_pivot_totales_peso
+-- -----------------------------------------
+-- Este proceso genera una vista similar a "totales", pero sólo para los pesos y con las zonas como columnas, de manera de poder visualizar los datos en un gráfico de barras
+
+
+DROP PROCEDURE IF EXISTS sp_pivot_totales_peso;
+DELIMITER $$
+CREATE PROCEDURE `sp_pivot_totales_peso`()
+BEGIN
+SET @sql = NULL;
+SELECT GROUP_CONCAT(DISTINCT
+           'MAX(CASE WHEN zona = "', zona, '" THEN `peso total` END) AS "', zona, '"')
+INTO @sql
+FROM totales;
+
+SET @sql = CONCAT('SELECT fecha, ', @sql, ' FROM totales GROUP BY fecha;');
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 END $$

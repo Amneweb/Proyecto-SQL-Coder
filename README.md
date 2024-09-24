@@ -41,6 +41,11 @@ A continuación se presentan algunos de los posibles informes generados con las 
 Se muestra el "rendimiento" del recorrido de cada vehiculo teniendo en cuenta los kilómetros andados. Se puede evaluar si conviene hacer muchos viajes cortos o uno largo
 - Baterias/zona: para evaluar la zona con mas compras en un determinado periodo de tiempo
 - Baterias/kilometro: (para cada cliente) para evaluar si conviene llevar las baterías a los clientes de más lejos, en funcion de las baterías que compra "por kilómetro". 
+
+Algunos de los informes se pueden ver en el siguiente enlace:
+https://docs.google.com/spreadsheets/d/1acsjlpZ8HwZZbNozNAOFZt7q1ZIRVsGQrWouIJMt6YQ/edit?usp=sharing
+
+
 # A futuro
 En lo que al código actual se refiere, quedan por mejorar varios aspectos, entre ellos: 
 - La generación de los repartos automáticamente para todas las zonas y la eventual división de un reparto en varios mas chicos, si es que el peso o las cantidades de una zona son mayores a las máximas por vehículo. 
