@@ -466,3 +466,26 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 END $$
+
+-- -----------------------------------------
+-- SP sp_pivot_cantidades_mes
+-- -----------------------------------------
+-- Este proceso genera una vista similar a la anterior, pero con los totales agrupados por mes
+
+
+DROP PROCEDURE IF EXISTS sp_pivot_cantidades_mes;
+DELIMITER $$
+CREATE PROCEDURE `sp_pivot_cantidades_mes`()
+BEGIN
+SET @sql = NULL;
+SELECT GROUP_CONCAT(DISTINCT
+           'MAX(CASE WHEN zona = "', zona, '" THEN `peso total` END) AS "', zona, '"')
+INTO @sql
+FROM totales_por_mes;
+
+SET @sql = CONCAT('SELECT mes, ', @sql, ' FROM totales_por_mes GROUP BY mes;');
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+END $$

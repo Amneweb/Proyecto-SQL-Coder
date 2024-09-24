@@ -91,6 +91,12 @@ SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedi
 CREATE OR REPLACE VIEW totales AS (SELECT zona, fecha, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones  GROUP BY fecha, zona order by fecha);
 
 
+-- ------------------------------------
+-- Vista totales por mes
+-- ------------------------------------
+-- Igual a la anterior pero con las cantidades, pesos y volúmenes agrupados por mes. 
+
+CREATE OR REPLACE VIEW totales_por_mes AS (SELECT zona, MONTHNAME(fecha) as mes, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones  GROUP BY mes, zona order by mes);
 
 SET @fecha='2024-08-31';
 SET @zona = 2;
