@@ -13,7 +13,7 @@ CREATE OR REPLACE VIEW pedidos_detallados AS
 
 -- 1) TODOS LOS CLIENTES
 
-SELECT * FROM vw_pedidos_detallados;
+SELECT * FROM pedidos_detallados;
 
 -- 2) UN CLIENTE (usando una variable)
 
@@ -51,7 +51,7 @@ SELECT * FROM productos_con_precios WHERE lista = fn_generar_variable_lista(@cli
 -- Basada en las tablas: CLIENTES, PEDIDOS, DETALLE_PEDIDOS, PRODUCTOS
 
 CREATE OR REPLACE VIEW dimensiones AS
-(SELECT c.fk_zona AS 'zona', p.fecha_pedido AS 'fecha', p.id_pedido, d.cantidad AS 'qty', pro.sku AS 'SKU', pro.dimension_longitud AS 'longitud', pro.dimension_alto AS 'alto',pro.dimension_ancho AS 'ancho', pro.dimension_peso AS 'peso',fn_volumen_individual(pro.dimension_longitud,pro.dimension_alto,pro.dimension_ancho, d.cantidad) AS 'volumen',fn_peso_individual(pro.dimension_peso, d.cantidad) AS 'peso_total' FROM CLIENTES c INNER JOIN PEDIDOS p ON c.id_cliente = p.fk_id_cliente INNER JOIN DETALLE_PEDIDOS d ON d.fk_id_pedido = p.id_pedido INNER JOIN PRODUCTOS pro ON d.fk_id_producto=pro.id_producto ORDER BY c.fk_zona DESC,p.id_pedido ASC);
+(SELECT c.fk_zona AS 'zona', p.fecha_pedido AS 'fecha', p.id_pedido, p.fk_id_estado AS 'estado', d.cantidad AS 'qty', pro.sku AS 'SKU', pro.dimension_longitud AS 'longitud', pro.dimension_alto AS 'alto',pro.dimension_ancho AS 'ancho', pro.dimension_peso AS 'peso',fn_volumen_individual(pro.dimension_longitud,pro.dimension_alto,pro.dimension_ancho, d.cantidad) AS 'volumen',fn_peso_individual(pro.dimension_peso, d.cantidad) AS 'peso_total' FROM CLIENTES c INNER JOIN PEDIDOS p ON c.id_cliente = p.fk_id_cliente INNER JOIN DETALLE_PEDIDOS d ON d.fk_id_pedido = p.id_pedido INNER JOIN PRODUCTOS pro ON d.fk_id_producto=pro.id_producto ORDER BY c.fk_zona DESC,p.id_pedido ASC);
 
 -- Opciones de SELECT para la vista anterior
 -- -------------------------------------------
@@ -98,19 +98,12 @@ CREATE OR REPLACE VIEW totales AS (SELECT zona, fecha, sum(volumen) AS "volumen 
 
 CREATE OR REPLACE VIEW totales_por_mes AS (SELECT zona, MONTHNAME(fecha) as mes, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones  GROUP BY mes, zona order by mes);
 
-SET @fecha='2024-08-31';
-SET @zona = 2;
-SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = @zona AND p.fecha_pedido = @fecha;
 
-SET @fecha='2024-08-31';
-SET @zona = 2;
-SELECT r.id_reparto, r.fk_id_zona, r.fecha, cz.fk_id_cliente,cz.id_pedido,pc.sku,pc.cantidad FROM REPARTOS r INNER JOIN (SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido, p.id_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = @zona AND p.fecha_pedido = @fecha) AS cz ON r.fk_id_zona = cz.fk_zona INNER JOIN pedido_cliente pc ON cz.fk_id_cliente = pc.id_cliente;
+-- ------------------------------------
+-- Vista totales por reparto
+-- ------------------------------------
+-- SE agrupan los productos de cada reparto para conocer las cantidades de cada uno en un reparto determinado
 
-SET @fecha='2024-08-31';
-SET @zona = 2;
-SELECT r.id_reparto, r.fk_id_zona, r.fecha, cz.fk_id_cliente,cz.id_pedido,pc.sku,pc.cantidad FROM REPARTOS r INNER JOIN (SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido, p.id_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = @zona AND p.fecha_pedido = @fecha) AS cz ON r.fk_id_zona = cz.fk_zona INNER JOIN pedido_cliente pc ON cz.fk_id_cliente = pc.id_cliente;
+CREATE OR REPLACE VIEW totales_por_reparto AS (SELECT fk_id_reparto, sku, SUM(cantidad) FROM (SELECT dr.fk_id_reparto, dr.fk_id_pedido, pd.id_cliente, pd.sku, pd.cantidad FROM DETALLE_REPARTOS dr INNER JOIN pedidos_detallados pd ON dr.fk_id_pedido = pd.id_pedido) as detalle GROUP BY fk_id_reparto,sku)
 
-SET @fecha='2024-08-31';
-SET @zona = 2;
-SELECT id_reparto, fk_id_zona, sku, SUM(cantidad) FROM (SELECT r.id_reparto, r.fk_id_zona, r.fecha, cz.fk_id_cliente,cz.id_pedido,pc.sku,pc.cantidad FROM REPARTOS r INNER JOIN (SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido, p.id_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = @zona AND p.fecha_pedido = @fecha) AS cz ON r.fk_id_zona = cz.fk_zona INNER JOIN pedido_cliente pc ON cz.fk_id_cliente = pc.id_cliente) AS detalle_repartos GROUP BY sku;
 

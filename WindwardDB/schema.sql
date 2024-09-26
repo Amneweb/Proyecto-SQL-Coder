@@ -198,3 +198,27 @@ ADD km_ini INT,
 ADD km_fin INT,
 DROP COLUMN kilometros;
 
+-- Table: DETALLE_REPARTOS
+CREATE TABLE DETALLE_REPARTOS (
+    fk_id_reparto int NOT NULL ,
+    fk_id_pedido int NOT NULL ,
+PRIMARY KEY (fk_id_reparto, fk_id_pedido),
+    FOREIGN KEY (fk_id_reparto) REFERENCES REPARTOS (id_reparto),
+    FOREIGN KEY (fk_id_pedido) REFERENCES PEDIDOS (id_pedido)
+);
+
+ALTER TABLE DETALLE_REPARTOS 
+DROP FOREIGN KEY detalle_repartos_ibfk_1;
+ALTER TABLE DETALLE_REPARTOS 
+ADD CONSTRAINT detalle_repartos_ibfk_1
+  FOREIGN KEY (fk_id_reparto)
+  REFERENCES REPARTOS (id_reparto)
+  ON DELETE CASCADE;
+
+ALTER TABLE DETALLE_REPARTOS 
+DROP FOREIGN KEY detalle_repartos_ibfk_2;
+ALTER TABLE DETALLE_REPARTOS 
+ADD CONSTRAINT detalle_repartos_ibfk_2
+  FOREIGN KEY (fk_id_pedido)
+  REFERENCES PEDIDOS (id_pedido)
+  ON DELETE CASCADE;

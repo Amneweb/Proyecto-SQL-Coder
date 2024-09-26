@@ -141,6 +141,19 @@ IF (IDcliente = 0 OR IDpedido = 0) THEN
 END $$
 
 -- --------------------------------------
+-- TRIGGER audit_estados_sby
+-- --------------------------------------
+
+-- Inserta registros en la tabla MODIFICACION_ESTADOS, que es como una auditoría de los cambios de estado por los que pasa un pedido cuando paso de estado APR a SBY 
+
+CREATE TRIGGER `tr_audit_estados_sby`
+AFTER UPDATE ON `PEDIDOS`
+FOR EACH ROW
+IF (NEW.id_estado = "SBY") THEN 
+INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES (id_pedido,1,CURRENT_TIMESTAMP(),"SBY", "APR");
+END IF;
+
+-- --------------------------------------
 -- SP sp_aprobar_pedido
 -- --------------------------------------
 
@@ -155,7 +168,7 @@ DECLARE i INT;
 DECLARE n INT;
 set @IDpedido = idpedido;
 set @EstadoPedido = (SELECT fk_id_estado FROM PEDIDOS WHERE id_pedido = @IDpedido);
-IF (@EstadoPedido != "APR") THEN 
+IF ((@EstadoPedido != "APR") AND (@EstadoPedido != "SBY")) THEN 
 UPDATE PEDIDOS SET fk_id_estado = "APR" WHERE id_pedido = @IDpedido;
 INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES (idpedido,idempleado,CURRENT_TIMESTAMP(),"APR", @EstadoPedido);
 DROP TABLE IF EXISTS stock_temporal;
@@ -321,21 +334,17 @@ IF EXISTS (SELECT id_pedido,fk_id_estado FROM PEDIDOS WHERE id_pedido=IDpedido A
 END $$
 
 
--- ------------------------------------------
--- SP sp_detalle_repartos
--- ------------------------------------------
--- SP que genera una vista con el detalle de los pedidos que componen cada reparto
 
-DROP PROCEDURE IF EXISTS sp_detalle_repartos;
-DELIMITER $$
-CREATE PROCEDURE `sp_detalle_repartos` (IN fecha_elegida DATE, IN IDzona INT)
-BEGIN
-SET @sql = CONCAT('CREATE OR REPLACE VIEW vw_detalle_repartos AS (SELECT r.id_reparto, r.fk_id_zona, r.fecha, cz.fk_id_cliente,cz.id_pedido,pc.sku,pc.cantidad FROM REPARTOS r INNER JOIN (SELECT p.fk_id_cliente, c.fk_zona, p.fecha_pedido, p.id_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = ', IDzona, ' AND p.fecha_pedido = "',fecha_elegida, '") AS cz ON r.fk_id_zona = cz.fk_zona INNER JOIN pedido_cliente pc ON cz.fk_id_cliente = pc.id_cliente)');
-PREPARE sentencia FROM @sql;
-EXECUTE sentencia;
-DEALLOCATE PREPARE sentencia;
-END $$
+-- --------------------------------------
+-- TRIGGER add_new_reparto
+-- --------------------------------------
 
+-- Este trigger es para tomar el id generado al momento de cargar un reparto y usar el mismo id para la tabla de detalle de repartos
+
+CREATE TRIGGER `tr_add_new_reparto`
+AFTER INSERT ON `REPARTOS`
+FOR EACH ROW
+SET @idNuevoReparto = NEW.id_reparto;
 
 -- ----------------------------------
 -- SP sp_generar_reparto
@@ -357,39 +366,61 @@ DECLARE IDlibre INT;
 DECLARE peso FLOAT;
 DECLARE j INT;
 DECLARE k INT;
-
 DROP TABLE IF EXISTS repartos_por_fecha;
 SET @sql = CONCAT('CREATE TEMPORARY TABLE repartos_por_fecha (SELECT id_reparto, fk_id_vehiculo, fk_id_zona FROM REPARTOS WHERE fecha = "',fecha_elegida,'")');
 PREPARE sentencia FROM @sql;
 EXECUTE sentencia;
 DEALLOCATE PREPARE sentencia;
 SET peso = (SELECT `peso total` FROM totales WHERE zona = IDzona AND fecha = fecha_elegida);
-IF NOT EXISTS (SELECT fk_id_zona FROM repartos_por_fecha WHERE fk_id_zona = IDzona) THEN
-DROP TABLE IF EXISTS vehiculos_libres;
-CREATE TEMPORARY TABLE vehiculos_libres (SELECT vl.id_vehiculo
-FROM VEHICULOS vl
-LEFT JOIN repartos_por_fecha vr
-      ON vl.id_vehiculo = vr.fk_id_vehiculo
-      WHERE fk_id_vehiculo IS NULL);
-	  SET k = (SELECT COUNT(*) FROM vehiculos_libres);
-SET j=0;
-SET @err = '';
-iterar_vehiculos_libres: WHILE j < k DO
-SELECT * FROM vehiculos_libres LIMIT j,1 INTO IDlibre;
-SELECT IDlibre; 
-IF ((SELECT max_peso FROM VEHICULOS v WHERE v.id_vehiculo = IDlibre)>peso) THEN
-INSERT INTO REPARTOS VALUES (NULL,IDlibre,1,IDzona,fecha_elegida,NULL, NULL);
-LEAVE iterar_vehiculos_libres;
-ELSE
-SET @err = CONCAT(@err," El vehiculo con id ",IDlibre," no se pudo seleccionar porque su peso maximo es menor que el de la zona");
+
+	IF NOT EXISTS (SELECT fk_id_zona FROM repartos_por_fecha WHERE fk_id_zona = IDzona) THEN
+		DROP TABLE IF EXISTS vehiculos_libres;
+		CREATE TEMPORARY TABLE vehiculos_libres (SELECT vl.id_vehiculo
+		FROM VEHICULOS vl
+		LEFT JOIN repartos_por_fecha vr
+			ON vl.id_vehiculo = vr.fk_id_vehiculo
+			WHERE fk_id_vehiculo IS NULL);
+			SET k = (SELECT COUNT(*) FROM vehiculos_libres);
+		SET j=0;
+		SET @err = '';
+		iterar_vehiculos_libres: WHILE j < k DO
+		SELECT * FROM vehiculos_libres LIMIT j,1 INTO IDlibre;
+		IF ((SELECT max_peso FROM VEHICULOS v WHERE v.id_vehiculo = IDlibre)>peso) THEN
+			INSERT INTO REPARTOS VALUES (NULL,IDlibre,1,IDzona,fecha_elegida,NULL, NULL);
+			INSERT INTO DETALLE_REPARTOS (fk_id_reparto,fk_id_pedido)((SELECT @idNuevoReparto, p.id_pedido FROM PEDIDOS p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = IDzona AND p.fecha_pedido = fecha_elegida));
+			LEAVE iterar_vehiculos_libres;
+		ELSE
+			SET @err = CONCAT(@err," El vehiculo con id ",IDlibre," no se pudo seleccionar porque su peso maximo es menor que el de la zona");
+		END IF;
+		SET j = j + 1;
+		IF (j>=k) THEN
+		DROP TABLE IF EXISTS pedidos_zona;
+		CREATE TEMPORARY TABLE pedidos_zona (SELECT c.fk_zona, p.id_pedido, p.fecha_pedido FROM CLIENTES c INNER JOIN PEDIDOS p ON p.fk_id_cliente = c.id_cliente);
+			UPDATE PEDIDOS SET fk_id_estado = "SBY" WHERE id_pedido IN (SELECT id_pedido FROM pedidos_zona WHERE fk_zona=IDzona AND fecha_pedido = fecha_elegida);
+			SET @err = "No se pudo generar el reparto debido a que ningún vehículo puede llevar tanta carga. Se pasaron los pedidos al estado STAND-BY para su división en repartos más chicos";
+		DROP TABLE IF EXISTS pedidos_zona;	
+		END IF;
+		END WHILE iterar_vehiculos_libres;
+	ELSE
+		SET @err = "La zona ya tiene un reparto asignado. Para seleccionar otro vehiculo, ir al procedimiento correspondiente";
+	END IF;
+
+IF (@err <>'') THEN 
+	SELECT @err;  
 END IF;
-SET j = j + 1;
-END WHILE iterar_vehiculos_libres; 
-ELSE
-SET @err = "La zona ya tiene un reparto asignado. Para seleccionar otro vehiculo, ir al procedimiento correspondiente";
-END IF;
-IF (@err <>'') THEN SELECT @err;  END IF;
 END $$
+
+-- --------------------------------------
+-- TRIGGER tr_pasar_a_reparto
+-- --------------------------------------
+
+-- Cambia el estado de los pedidos involucrados en un reparto determinado a "REP"
+
+CREATE TRIGGER `tr_pasar_a_reparto`
+AFTER INSERT ON `DETALLE_REPARTOS`
+FOR EACH ROW
+SET @idPedido = NEW.fk_id_pedido;
+CALL sp_modificar_estado(@idPedido, 1, "REP")
 
 -- ----------------------------------
 -- SP sp_cargar_km
@@ -437,12 +468,26 @@ SELECT err;
 END IF;
 END $$
 
-
 -- --------------------------------------
--- SP sp_pivot_listas
+-- SP sp_modificar_estado
 -- --------------------------------------
 
--- SP que genera una vista de los productos con sus precios, trasponiendo la vista productos_con_precios dinámicamente.
+-- SP que modifica el estado del pedido, excepto cuando se lo aproeba, que tiene su propio stored procedure. Luego de la modificacion se agrega un registro a la tabla MODIFICACION_ESTADOS.
+-- Los parámetros de entrada son los id de empleado y pedido, y el nuevo estado.
+
+DROP PROCEDURE IF EXISTS sp_modificar_estado;
+DELIMITER $$
+CREATE PROCEDURE `sp_modificar_estado` (IN idpedido INT, IN idempleado INT, IN estado VARCHAR(3))
+BEGIN
+set @IDpedido = idpedido;
+set @EstadoPedido = (SELECT fk_id_estado FROM PEDIDOS WHERE id_pedido = @IDpedido);
+UPDATE PEDIDOS SET fk_id_estado = estado WHERE id_pedido = @IDpedido;
+INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES (idpedido,idempleado,CURRENT_TIMESTAMP(),estado, @EstadoPedido); 
+END $$
+
+-- ///////////////////////////////////
+-- Para INFORMES
+-- ///////////////////////////////////
 
 -- -----------------------------------------
 -- SP sp_pivot_totales_peso
@@ -489,3 +534,5 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 END $$
+
+
