@@ -86,9 +86,9 @@ SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedi
 -- ------------------------------------
 -- Vista totales
 -- ------------------------------------
--- Se obtienen los totales de peso, volumen y cantidad agrupados por zona y por fecha
+-- Se obtienen los totales de peso, volumen y cantidad agrupados por zona y por fecha para los pedidos en estado aprobado
 
-CREATE OR REPLACE VIEW totales AS (SELECT zona, fecha, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones  GROUP BY fecha, zona order by fecha);
+CREATE OR REPLACE VIEW totales AS (SELECT zona, fecha, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones WHERE estado="APR" GROUP BY fecha, zona order by fecha);
 
 
 -- ------------------------------------
@@ -96,7 +96,7 @@ CREATE OR REPLACE VIEW totales AS (SELECT zona, fecha, sum(volumen) AS "volumen 
 -- ------------------------------------
 -- Igual a la anterior pero con las cantidades, pesos y volúmenes agrupados por mes. 
 
-CREATE OR REPLACE VIEW totales_por_mes AS (SELECT zona, MONTHNAME(fecha) as mes, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones  GROUP BY mes, zona order by mes);
+CREATE OR REPLACE VIEW totales_por_mes AS (SELECT zona, MONTHNAME(fecha) as mes, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones WHERE estado="APR"  GROUP BY mes, zona order by mes);
 
 
 -- ------------------------------------

@@ -140,18 +140,7 @@ IF (IDcliente = 0 OR IDpedido = 0) THEN
 	END IF;
 END $$
 
--- --------------------------------------
--- TRIGGER audit_estados_sby
--- --------------------------------------
 
--- Inserta registros en la tabla MODIFICACION_ESTADOS, que es como una auditoría de los cambios de estado por los que pasa un pedido cuando paso de estado APR a SBY 
-
-CREATE TRIGGER `tr_audit_estados_sby`
-AFTER UPDATE ON `PEDIDOS`
-FOR EACH ROW
-IF (NEW.id_estado = "SBY") THEN 
-INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES (id_pedido,1,CURRENT_TIMESTAMP(),"SBY", "APR");
-END IF;
 
 -- --------------------------------------
 -- SP sp_aprobar_pedido
@@ -366,6 +355,7 @@ DECLARE IDlibre INT;
 DECLARE peso FLOAT;
 DECLARE j INT;
 DECLARE k INT;
+DECLARE n INT;
 DROP TABLE IF EXISTS repartos_por_fecha;
 SET @sql = CONCAT('CREATE TEMPORARY TABLE repartos_por_fecha (SELECT id_reparto, fk_id_vehiculo, fk_id_zona FROM REPARTOS WHERE fecha = "',fecha_elegida,'")');
 PREPARE sentencia FROM @sql;
@@ -395,8 +385,14 @@ SET peso = (SELECT `peso total` FROM totales WHERE zona = IDzona AND fecha = fec
 		SET j = j + 1;
 		IF (j>=k) THEN
 		DROP TABLE IF EXISTS pedidos_zona;
-		CREATE TEMPORARY TABLE pedidos_zona (SELECT c.fk_zona, p.id_pedido, p.fecha_pedido FROM CLIENTES c INNER JOIN PEDIDOS p ON p.fk_id_cliente = c.id_cliente);
-			UPDATE PEDIDOS SET fk_id_estado = "SBY" WHERE id_pedido IN (SELECT id_pedido FROM pedidos_zona WHERE fk_zona=IDzona AND fecha_pedido = fecha_elegida);
+		CREATE TEMPORARY TABLE pedidos_zona (SELECT c.fk_zona, p.id_pedido, p.fecha_pedido FROM CLIENTES c INNER JOIN PEDIDOS p ON p.fk_id_cliente = c.id_cliente WHERE fk_zona=IDzona AND fecha_pedido = fecha_elegida);
+		SET @cant_pedidos_sin_reparto = SELECT COUNT(id_pedido) FROM pedidos_zona GROUP BY fk_zona;
+		SET n = 0;
+		WHILE n < @cant_pedidos_sin_reparto DO
+		CALL sp_modificar_estado((SELECT id_pedido FROM pedidos_zona LIMIT @n,1),1,"SBY");
+		INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES ((SELECT id_pedido FROM pedidos_zona LIMIT @n,1),1,CURRENT_TIMESTAMP(),"SBY", "APR");
+		n = n +1;
+		END WHILE;
 			SET @err = "No se pudo generar el reparto debido a que ningún vehículo puede llevar tanta carga. Se pasaron los pedidos al estado STAND-BY para su división en repartos más chicos";
 		DROP TABLE IF EXISTS pedidos_zona;	
 		END IF;
@@ -405,7 +401,7 @@ SET peso = (SELECT `peso total` FROM totales WHERE zona = IDzona AND fecha = fec
 		SET @err = "La zona ya tiene un reparto asignado. Para seleccionar otro vehiculo, ir al procedimiento correspondiente";
 	END IF;
 
-IF (@err <>'') THEN 
+IF (@err !='') THEN 
 	SELECT @err;  
 END IF;
 END $$
