@@ -85,7 +85,7 @@ Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reempl
 
 <img src="imagenes/6.png" width="20" alt="logo workbench"> **WorkBench:** como gestor de base de datos
 
-<img src="imagenes/4.png" width="20" alt="logo google sheets"> **Google sheets:** para la descripción de las tablas
+<img src="imagenes/4.png" width="20" alt="logo google sheets"> **Google sheets:** para la descripción de las tablas y generación de gráficos
 
 ... Lápiz y papel :sweat_smile:
 
@@ -98,6 +98,9 @@ Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reempl
 > - procedures.sql - contiene los triggers, funciones y stored procedures
 > - functions.sql - contiene las funciones
 > - views.sql - contiene las vistas
+
+> [!CAUTION]  
+> Hay un archivo general.sql en la carpeta raiz, que contiene todos los scripts en uno y se podría correr en reemplazo de todos los anteriores, pero me ha pasado que **no se cargan las funciones o los triggers** (y no se genera ningún mensaje de error) y luego no funcionan los scripts de procedures o vistas.
 
 Cada uno de los archivos de procedures, functions y views contiene la descripción del proceso, función o vista correspondiente, las tablas que involucran y lo que se quiere obtener.
 
