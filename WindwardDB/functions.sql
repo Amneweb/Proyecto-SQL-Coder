@@ -45,14 +45,8 @@ DECLARE id_seleccionado INT DEFAULT 0;
 DECLARE n INT DEFAULT 0;
 DECLARE i INT DEFAULT 0;
 SET i=0;
-
-
-
  SET n = (SELECT COUNT(*) FROM vehiculos_libres);
-
-
 WHILE i < n DO
-
 SELECT max_peso, max_volumen, max_cantidades, id_vehiculo  FROM VEHICULOS v INNER JOIN vehiculos_libres as vl ON vl.id_libres = v.id_vehiculo ORDER BY max_peso ASC LIMIT i,1 INTO maxPeso, maxVolumen, maxCantidad,id_seleccionado;
 -- Empieza primer verificacion con el peso
 IF (peso > maxPeso) THEN
@@ -72,33 +66,3 @@ END WHILE;
 RETURN id_seleccionado; 
 END $$
 
--- ---------------------???????????????
--- opcion 2
--- ---------------------------
-DROP FUNCTION IF EXISTS fn_confirmar_vehiculo;
-DELIMITER $$
-CREATE FUNCTION `fn_confirmar_vehiculo`(IDlibre INT,peso FLOAT, volumen FLOAT, cantidad INT) RETURNS VARCHAR(6)
-    READS SQL DATA
-BEGIN
-DECLARE maxVolumen INT DEFAULT 0;
-DECLARE maxPeso INT DEFAULT 0;
-DECLARE maxCantidad INT DEFAULT 0;
-
-
-SELECT max_peso, max_volumen, max_cantidades, id_vehiculo  FROM VEHICULOS v WHERE id_vehiculo = IDlibre INTO maxPeso, maxVolumen, maxCantidad;
--- Empieza primer verificacion con el peso
-IF (peso > maxPeso) THEN
-RETURN "NOTOK";
-ELSE
-    IF (volumen > maxVolumen) THEN
-    RETURN "NOTOK";
-    ELSE
-        IF (cantidad > maxCantidad) THEN
-        RETURN "NOTOK";
-        ELSE
-          RETURN "OK";
-        END IF;
-    END IF;
-END IF;
-
-END $$

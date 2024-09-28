@@ -1,5 +1,5 @@
 # PROYECTO CURSO SQL DE CODERHOUSE
-![Banner Introducción Readme](bannerSQL.jpg)
+![Banner Introducción Readme](imagenes/bannerSQL.jpg)
 Bienvenidos a "WINDWARD-APP", sistema de gestión online para una distribuidora mayorista (ficticia) de baterías para vehículos, que cuenta con una flota propia de camionetas para reparto.
 Este proyecto trata de la base de datos, con sus procedimientos y funciones, para mejorar el sistema de órdenes de pedidos y logística de entrega. 
 
@@ -21,7 +21,7 @@ Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una 
 
 
 ### Solución propuesta
-![Banner Mock App](AppMockLand.jpg)
+![Banner Mock App](imagenes/AppMockLand.jpg)
 
 **Elaborar una app de gestión online (de la cual este proyecto consistirá sólo en la base de datos) que permita:**
 
@@ -75,17 +75,17 @@ Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reempl
 
 # Tecnologías usadas
 
-<img src="2.png" width="20" alt="logo git"> **Git:** para control de versiones de los archivos
+<img src="imagenes/2.png" width="20" alt="logo git"> **Git:** para control de versiones de los archivos
 
-<img src="3.png" width="20" alt="Logo github"> **Github:** como repositorio de la rama principal y la rama de desarrollo
+<img src="imagenes/3.png" width="20" alt="Logo github"> **Github:** como repositorio de la rama principal y la rama de desarrollo
 
-<img src="1.png" width="20" alt="logo VScode"> **Visual Studio Code:** para escribir el código y manipular las ramas desde su terminal
+<img src="imagenes/1.png" width="20" alt="logo VScode"> **Visual Studio Code:** para escribir el código y manipular las ramas desde su terminal
 
-<img src="5.png" width="20" alt="logo miro"> **Miro:** para el diagrama E-R 
+<img src="imagenes/5.png" width="20" alt="logo miro"> **Miro:** para el diagrama E-R 
 
-<img src="6.png" width="20" alt="logo workbench"> **WorkBench:** como gestor de base de datos
+<img src="imagenes/6.png" width="20" alt="logo workbench"> **WorkBench:** como gestor de base de datos
 
-<img src="4.png" width="20" alt="logo google sheets"> **Google sheets:** para la descripción de las tablas
+<img src="imagenes/4.png" width="20" alt="logo google sheets"> **Google sheets:** para la descripción de las tablas
 
 ... Lápiz y papel :sweat_smile:
 
@@ -136,9 +136,9 @@ La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf
 > [!NOTE]  
 > En el dibujo la tabla vehículos no tiene los atributos de máximos, pero sí van, tal como aparecen en el archivo sql y la definición de tablas
 
-![Diagrama E-R tentativo del proyecto de ventas al por mayor y distribución](Windward.jpg)
+![Diagrama E-R tentativo del proyecto de ventas al por mayor y distribución](imagenes/Windward.jpg)
 
 # DIAGRAMA DE TABLAS - REVERSE ENGINEER
 
-![Diagrama de tablas obtenido con la función Reverse Engineer de Workbench](ReverseEngineer.jpg)
+![Diagrama de tablas obtenido con la función Reverse Engineer de Workbench](imagenes/ReverseEngineer.jpg)
 

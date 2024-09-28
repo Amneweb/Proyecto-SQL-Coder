@@ -1,7 +1,7 @@
 -- Created by Amneweb
-CREATE SCHEMA `windward2` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8_spanish_ci ;
+CREATE SCHEMA `windward3` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
 
-USE windward2;
+USE windward3;
 -- tables
 
 -- Table: ZONA

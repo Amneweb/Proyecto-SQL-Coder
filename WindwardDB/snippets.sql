@@ -21,7 +21,7 @@ SELECT * FROM DETALLE_PEDIDOS;
 -- 2) Hacemos correr el procedure
 -- Argumentos (IDcliente, JSON con pedido {IDproducto, cantidad})
 
-CALL sp_generar_pedidos (3,'[{"producto":1,"cantidad":2},{"producto":2,"cantidad":10},{"producto":4,"cantidad":3}]');
+CALL sp_generar_pedidos (3,'[{"producto":8,"cantidad":2},{"producto":5,"cantidad":10},{"producto":4,"cantidad":3}]');
 
 -- 3) Ver el pedido recien creado 
 
@@ -38,9 +38,10 @@ CALL sp_generar_pedidos (7, '[]');
 -- 5.b Json con objetos vacíos
 CALL sp_generar_pedidos (7, '[{},{}]');
 -- 5.c Varios productos, uno de los cuales tiene cantidad 0
-CALL sp_generar_pedidos (9, '[{"producto":7,"cantidad":0},{"producto":1,"cantidad":3},{"producto":4,"cantidad":20},{"producto":3,"cantidad":5}]');
+CALL sp_generar_pedidos (9, '[{"producto":7,"cantidad":0},{"producto":8,"cantidad":3},{"producto":4,"cantidad":20},{"producto":3,"cantidad":5}]');
+
 -- 5.d Todos los objetos tienen errores: el primero tiene un producto que no existe, el segundo tiene cantidad 0 y el tercero es un producto con stock 0
-CALL sp_generar_pedidos (9, '[{"producto":25,"cantidad":1},{"producto":1,"cantidad":0},{"producto":2,"cantidad":20}]');
+CALL sp_generar_pedidos (9, '[{"producto":25,"cantidad":1},{"producto":6,"cantidad":0},{"producto":1,"cantidad":9}]');
 
 -- ---------------------------------------------------------------------------------
 -- Hacer un pedido en que la cantidad de uno de los productos es mayor que el stock
@@ -65,61 +66,70 @@ SELECT id_producto, nombre, stock FROM PRODUCTOS;
 
 
 -- ------------------------------------------------------------
--- Modificar pedido 4, cambiando la cantidad del producto 2.
+-- Modificar un pedido
 -- ------------------------------------------------------------
--- 1) Vemos el detalle del pedido actual
+-- 1) Generamos un pedido nuevo
 
-SET @cliente = 8;
+CALL sp_generar_pedidos (11,'[{"producto":5,"cantidad":1}]');
+
+-- 2) Vemos el detalle del pedido recién generado (si el cliente tiene más de un pedido, el generado recién es el de mayor id)
+
+SET @cliente = 11;
 SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 
--- 2) Hacemos correr el procedure.
+-- 3) Hacemos correr el procedure (el id del pedido debe verse en el resultado del select anterior)
 -- Argumentos (IDcliente, IDpedido, qty,IDproducto, tipo_modificacion)
 
-CALL sp_modificar_pedido (8,4,3,2,"UPDATE");
+CALL sp_modificar_pedido (11,14,3,5,"UPDATE");
 
--- 3) Ver cambios en detalle de pedido
+-- 4) Ver cambios en detalle de pedido
 
-SET @cliente = 8;
+SET @cliente = 11;
 SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 
 -- ------------------------------------------------------------
--- Modificar pedido 4, agregando un producto nuevo
+-- Modificar pedido anterior, agregando un producto nuevo
 -- ------------------------------------------------------------
 
 -- 1) Hacemos correr el procedure
--- Argumentos (IDcliente, IDpedido, qty,IDproducto, tipo_modificacion)
--- 1.a) Probamos con un producto que ya existe en el pedido
 
-CALL sp_modificar_pedido (8,4,1,2,"ADD");
+-- 1.a) Probamos con un producto que ya existe en el pedido
+-- Argumentos (IDcliente, IDpedido, qty,IDproducto, tipo_modificacion)
+
+CALL sp_modificar_pedido (11,14,3,5,"ADD");
 
 -- 1.b) Ahora agregamos un producto que no estaba en el pedido
+-- Argumentos (IDcliente, IDpedido, qty,IDproducto, tipo_modificacion)
 
-CALL sp_modificar_pedido (8,4,1,3,"ADD");
+CALL sp_modificar_pedido (11,14,1,3,"ADD");
 
 -- 2) Vemos nuevamente el detalle del pedido
 
-SET @cliente = 8;
+SET @cliente = 11;
 SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 
 -- 3) Tratamos de modificar un pedido que ya estaba aprobado
+-- Argumentos (IDcliente, IDpedido, qty,IDproducto, tipo_modificacion)
 
-CALL sp_modificar_pedido (1,1,3,5,"UPDATE");
+CALL sp_modificar_pedido (5,2,3,5,"UPDATE");
 
 -- 4) Tratamos de modificar un pedido enviando datos incorrectos
 -- 4.a) código de modificación incorrecto
+-- Argumentos (IDcliente, IDpedido, qty,IDproducto, tipo_modificacion)
 
-CALL sp_modificar_pedido (1,2,3,5,"MODIFICAR");
+CALL sp_modificar_pedido (11,14,3,5,"MODIFICAR");
 
 -- 4.b) algún valor = 0
+-- Argumentos (IDcliente, IDpedido, qty,IDproducto, tipo_modificacion)
 
-CALL sp_modificar_pedido (1,2,0,5,"UPDATE");
+CALL sp_modificar_pedido (11,14,0,5,"UPDATE");
 
 -- ------------------------------------------------------------
--- Borrar pedido 4 completo
+-- Borrar pedido anterior completo
 -- ------------------------------------------------------------
 -- Argumentos (IDcliente, IDpedido)
 
-CALL sp_borrar_pedido (8,4);
+CALL sp_borrar_pedido (11,14);
 
 -- Verificamos que no existe el pedido en la tabla PEDIDOS ni en la tabla DETALLE_PEDIDOS
 SELECT * FROM PEDIDOS;
@@ -144,20 +154,21 @@ SELECT razon_social,SUM(Total_renglon) AS "Total pedido", SUM(cantidad) AS "Tota
 -- **************************************************
 
 -- ---------------------------------------------------------------------------------
--- Aprobar el pedido con id 5 (y dar de baja del stock los productos involucrados). 
+-- Aprobar un pedido (y dar de baja del stock los productos involucrados). 
 -- ---------------------------------------------------------------------------------
--- 1) Vemos el detalle del pedido 5, y las cantidades en stock, para comparar después
 
-SELECT dp.*, p.stock FROM DETALLE_PEDIDOS dp INNER JOIN PRODUCTOS p ON dp.fk_id_producto = p.id_producto WHERE dp.fk_id_pedido = 5;
+-- 1) Vemos el detalle del pedido 1, y las cantidades en stock, para comparar después
 
--- 2) Corremos el proceso para aprobar el pedido 5
+SELECT dp.*, p.stock FROM DETALLE_PEDIDOS dp INNER JOIN PRODUCTOS p ON dp.fk_id_producto = p.id_producto WHERE dp.fk_id_pedido = 1;
+
+-- 2) Corremos el proceso para aprobar el pedido 1
 -- Argumentos (IDpedido, IDempleado)
 
-CALL sp_aprobar_pedido (5,2);
+CALL sp_aprobar_pedido (1,2);
 
 -- 3) Volvemos a ver el stock de los productos
 
-SELECT dp.*, p.stock FROM DETALLE_PEDIDOS dp INNER JOIN PRODUCTOS p ON dp.fk_id_producto = p.id_producto WHERE dp.fk_id_pedido = 5;
+SELECT dp.*, p.stock FROM DETALLE_PEDIDOS dp INNER JOIN PRODUCTOS p ON dp.fk_id_producto = p.id_producto WHERE dp.fk_id_pedido = 1;
 
 -- -----------------------------------------------------------------------
 -- Ver pedidos con el detalle de la orden de compra de todos los clientes
@@ -198,13 +209,13 @@ CALL sp_pivot_listas();
 
 
 -- -----------------------------------------------------------------------------------------
--- Totales de volumen, peso y cantidad de los pedidos del dia 2024-08-31, agrupados por zona
+-- Totales de volumen, peso y cantidad de los pedidos aprobados, agrupados por zona y fecha
 -- -----------------------------------------------------------------------------------------
 
-SELECT * FROM totales_por_fecha;
+SELECT * FROM totales;
 
 -- -----------------------------------------------------------------------------------------
--- Ver cómo se fueron dando las odificaciones de estado de los pedidos 
+-- Ver cómo se fueron dando las modificaciones de estado de los pedidos 
 -- -----------------------------------------------------------------------------------------
 
 SELECT * FROM MODIFICACION_ESTADOS;
@@ -213,7 +224,23 @@ SELECT * FROM MODIFICACION_ESTADOS;
 -- Generación del reparto para una determinada zona (enviada al sp como parámetro)
 -- -----------------------------------------------------------------------------------------
 
-CALL sp_generar_reparto(2, "2024-08-31")
+CALL sp_generar_reparto(2, "2024-08-31");
+
+-- Ver reparto generado
+SELECT * FROM REPARTOS;
+
+-- Ver detalle del reparto generado (con el id de los pedidos involucrados)
+SELECT * FROM DETALLE_REPARTOS;
+
+-- Generar repartos para otras zonas
+CALL sp_generar_reparto(1, "2024-08-31");
+CALL sp_generar_reparto(3, "2024-08-31");
+
+-- Ver todos los repartos generados
+SELECT * FROM REPARTOS;
+
+-- Ver detalle de todos los repartos
+SELECT * FROM DETALLE_REPARTOS;
 
 -- -----------------------------------------------------------------------------------------
 -- Insersión del kilometraje inicial o final de un reparto determinado

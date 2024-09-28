@@ -1,5 +1,5 @@
 -- ----------------------------------------
--- VISTA vw_pedidos_detallados
+-- VISTA pedidos_detallados
 -- ----------------------------------------
 
 -- Vista que muestra el listado de pedidos ordenado por pedido, incluyendo el detalle 'producto - cantidad'
@@ -13,12 +13,12 @@ CREATE OR REPLACE VIEW pedidos_detallados AS
 
 -- 1) TODOS LOS CLIENTES
 
-SELECT * FROM pedidos_detallados;
+-- SELECT * FROM pedidos_detallados;
 
 -- 2) UN CLIENTE (usando una variable)
 
-SET @cliente = 2;
-SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
+-- SET @cliente = 2;
+-- SELECT * FROM pedidos_detallados WHERE id_cliente = @cliente;
 
 -- ----------------------------------------
 -- VISTA productos_con_precios
@@ -35,12 +35,21 @@ CREATE OR REPLACE VIEW productos_con_precios AS
 
 -- 1) TODAS LAS LISTAS (este select sin filtro no tiene mucha aplicacion. Para una mejor presentación de los datos, se usa el SP sp_pivot_listas)
 
-SELECT * FROM productos_con_precios;
+-- SELECT * FROM productos_con_precios;
 
 -- 2) UNA LISTA (en base a la variable id de cliente) Ese filtro se define en base al cliente, a traves de la funcion generar_variable_lista. Esta función podría reemplazarse directamente por una subquery en WHERE, pero de esta manera queda más prolijo.
 
-SET @cliente = 2;
-SELECT * FROM productos_con_precios WHERE lista = fn_generar_variable_lista(@cliente);
+-- SET @cliente = 2;
+-- SELECT * FROM productos_con_precios WHERE lista = fn_generar_variable_lista(@cliente);
+
+
+-- ----------------------------------------
+-- VISTA pedidos_aprobados
+-- ----------------------------------------
+-- Esta vista reemplaza a la tabla PEDIDOS en lo que a generación de repartos se refiere, ya que contiene sólo los pedidos aprobados.
+
+CREATE OR REPLACE VIEW pedidos_aprobados AS 
+(SELECT * FROM PEDIDOS WHERE fk_id_estado = "APR");
 
 
 -- ----------------------------------------
@@ -51,18 +60,18 @@ SELECT * FROM productos_con_precios WHERE lista = fn_generar_variable_lista(@cli
 -- Basada en las tablas: CLIENTES, PEDIDOS, DETALLE_PEDIDOS, PRODUCTOS
 
 CREATE OR REPLACE VIEW dimensiones AS
-(SELECT c.fk_zona AS 'zona', p.fecha_pedido AS 'fecha', p.id_pedido, p.fk_id_estado AS 'estado', d.cantidad AS 'qty', pro.sku AS 'SKU', pro.dimension_longitud AS 'longitud', pro.dimension_alto AS 'alto',pro.dimension_ancho AS 'ancho', pro.dimension_peso AS 'peso',fn_volumen_individual(pro.dimension_longitud,pro.dimension_alto,pro.dimension_ancho, d.cantidad) AS 'volumen',fn_peso_individual(pro.dimension_peso, d.cantidad) AS 'peso_total' FROM CLIENTES c INNER JOIN PEDIDOS p ON c.id_cliente = p.fk_id_cliente INNER JOIN DETALLE_PEDIDOS d ON d.fk_id_pedido = p.id_pedido INNER JOIN PRODUCTOS pro ON d.fk_id_producto=pro.id_producto ORDER BY c.fk_zona DESC,p.id_pedido ASC);
+(SELECT c.fk_zona AS 'zona', p.fecha_pedido AS 'fecha', p.id_pedido, p.fk_id_estado AS 'estado', d.cantidad AS 'qty', pro.sku AS 'SKU', pro.dimension_longitud AS 'longitud', pro.dimension_alto AS 'alto',pro.dimension_ancho AS 'ancho', pro.dimension_peso AS 'peso',fn_volumen_individual(pro.dimension_longitud,pro.dimension_alto,pro.dimension_ancho, d.cantidad) AS 'volumen',fn_peso_individual(pro.dimension_peso, d.cantidad) AS 'peso_total' FROM CLIENTES c INNER JOIN pedidos_aprobados p ON c.id_cliente = p.fk_id_cliente INNER JOIN DETALLE_PEDIDOS d ON d.fk_id_pedido = p.id_pedido INNER JOIN PRODUCTOS pro ON d.fk_id_producto=pro.id_producto ORDER BY c.fk_zona DESC,p.id_pedido ASC);
 
 -- Opciones de SELECT para la vista anterior
 -- -------------------------------------------
 
 -- 1) TODOS LOS PEDIDOS
 
-SELECT * FROM dimensiones;
+-- SELECT * FROM dimensiones;
 
 -- 2) FILTRADO POR ZONA y FECHA
 
-SELECT * FROM dimensiones WHERE zona = 1 AND fecha = "2024-08-31";
+-- SELECT * FROM dimensiones WHERE zona = 1 AND fecha = "2024-08-31";
 
 
 -- ---------------------------------------
@@ -76,9 +85,9 @@ CREATE OR REPLACE VIEW pedido_cliente AS (SELECT pd.id_cliente, pd.razon_social,
 
 -- Se filtra por cliente y fecha
 
-SET @cliente = 1;
-SET @fecha_pedido = "2024-08-31";
-SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedido;
+-- SET @cliente = 1;
+-- SET @fecha_pedido = "2024-08-31";
+-- SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedido;
 
 -- Ver más opciones de resultados obtenidos con esta vista en el archivo snippets
 
@@ -88,7 +97,7 @@ SELECT * FROM pedido_cliente WHERE id_cliente = @cliente AND fecha = @fecha_pedi
 -- ------------------------------------
 -- Se obtienen los totales de peso, volumen y cantidad agrupados por zona y por fecha para los pedidos en estado aprobado
 
-CREATE OR REPLACE VIEW totales AS (SELECT zona, fecha, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones WHERE estado="APR" GROUP BY fecha, zona order by fecha);
+CREATE OR REPLACE VIEW totales AS (SELECT zona, fecha, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones GROUP BY fecha, zona order by fecha);
 
 
 -- ------------------------------------
@@ -96,7 +105,7 @@ CREATE OR REPLACE VIEW totales AS (SELECT zona, fecha, sum(volumen) AS "volumen 
 -- ------------------------------------
 -- Igual a la anterior pero con las cantidades, pesos y volúmenes agrupados por mes. 
 
-CREATE OR REPLACE VIEW totales_por_mes AS (SELECT zona, MONTHNAME(fecha) as mes, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones WHERE estado="APR"  GROUP BY mes, zona order by mes);
+CREATE OR REPLACE VIEW totales_por_mes AS (SELECT zona, MONTHNAME(fecha) as mes, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones GROUP BY mes, zona order by mes);
 
 
 -- ------------------------------------
