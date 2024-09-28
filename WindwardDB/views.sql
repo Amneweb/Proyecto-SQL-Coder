@@ -56,8 +56,8 @@ CREATE OR REPLACE VIEW pedidos_aprobados AS
 -- VISTA dimensiones
 -- ----------------------------------------
 
--- La siguiente vista muestra las dimensiones de cada producto y los valores calculados de volumen y peso total por producto para todos los pedidos. Los datos se muestran ordenados por zona. Eventualmente se pueden filtrar por zona y fecha. Más adelante esta vista se usa para calcular los volumenes, pesos y cantidades totales por zona para una fecha determinada.
--- Basada en las tablas: CLIENTES, PEDIDOS, DETALLE_PEDIDOS, PRODUCTOS
+-- La siguiente vista muestra las dimensiones de cada producto y los valores calculados de volumen y peso total por producto para todos los pedidos. Los datos se muestran ordenados por zona. Eventualmente se pueden filtrar por zona y fecha. Más adelante esta vista se usa para calcular los volúmenes, pesos y cantidades totales por zona para una fecha determinada.
+-- Basada en las tablas/vistas: CLIENTES, pedidos_aprobados, DETALLE_PEDIDOS, PRODUCTOS
 
 CREATE OR REPLACE VIEW dimensiones AS
 (SELECT c.fk_zona AS 'zona', p.fecha_pedido AS 'fecha', p.id_pedido, p.fk_id_estado AS 'estado', d.cantidad AS 'qty', pro.sku AS 'SKU', pro.dimension_longitud AS 'longitud', pro.dimension_alto AS 'alto',pro.dimension_ancho AS 'ancho', pro.dimension_peso AS 'peso',fn_volumen_individual(pro.dimension_longitud,pro.dimension_alto,pro.dimension_ancho, d.cantidad) AS 'volumen',fn_peso_individual(pro.dimension_peso, d.cantidad) AS 'peso_total' FROM CLIENTES c INNER JOIN pedidos_aprobados p ON c.id_cliente = p.fk_id_cliente INNER JOIN DETALLE_PEDIDOS d ON d.fk_id_pedido = p.id_pedido INNER JOIN PRODUCTOS pro ON d.fk_id_producto=pro.id_producto ORDER BY c.fk_zona DESC,p.id_pedido ASC);
@@ -103,7 +103,7 @@ CREATE OR REPLACE VIEW totales AS (SELECT zona, fecha, sum(volumen) AS "volumen 
 -- ------------------------------------
 -- Vista totales por mes
 -- ------------------------------------
--- Igual a la anterior pero con las cantidades, pesos y volúmenes agrupados por mes. 
+-- Igual a la anterior pero con las cantidades, pesos y volúmenes agrupados por mes. Se basa en la vista dimensiones
 
 CREATE OR REPLACE VIEW totales_por_mes AS (SELECT zona, MONTHNAME(fecha) as mes, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones GROUP BY mes, zona order by mes);
 
