@@ -18,7 +18,8 @@
 -- ..4.a El id del producto corresponda a un producto existente
 -- ..4.b La cantidad solicitada sea mayor que 0
 -- ..4.c El stock del producto sea mayor que 0
--- 5. Si las condiciones anteriores hacen que no se pueda ingresar ningún registro a la tabla detalle de pedidos, se borra el registro recién ingresado a la tabla pedidos.
+-- 5. Se dan de baja del stock correspondiente las cantidades involucradas de cada producto
+-- 6. Si las condiciones anteriores hacen que no se pueda ingresar ningún registro a la tabla detalle de pedidos, se borra el registro recién ingresado a la tabla pedidos.
 
 -- NOTA: Los errores se van guardando en una tabla temporaria
 
