@@ -1,3 +1,6 @@
+/* 
+SCHEMA
+*/
 -- Created by Amneweb
 CREATE SCHEMA `windward3` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
 
@@ -223,9 +226,9 @@ ADD CONSTRAINT detalle_repartos_ibfk_2
   REFERENCES PEDIDOS (id_pedido)
   ON DELETE CASCADE;
 
--- /////////////////////////////
--- DATOS
--- ////////////////////////////
+/*
+DATOS
+*/
 INSERT INTO TIPO_DOCUMENTO VALUES ("DNI","Documento Nacional de Identidad"),
 ("CI","Cedula de Identidad"),("CUIT","Clave Unica de Identificacion Tributaria"),("CUIL","Clave Unica de Identificacion Laboral");
 
@@ -309,20 +312,9 @@ INSERT INTO VEHICULOS VALUES
 (NULL,"ZZZ-333-AA", "Iveco", "Iveco", 2500,2000,200,10),
 (NULL,"ZZZ-444-AA", "Renault", "Camion", 7000,5000,500,20);
 
--- ////////////////////////
--- PROCEDURES
--- ///////////////////////
--- --------------------------------------
--- TRIGGER add_new_pedido
--- --------------------------------------
-
--- Este trigger es para tomar el id generado al momento de cargar un pedido (como el id es autoincremental y se genera automáticamente, no lo sabemos de antemano, y me pareció que esta era una buena manera de obtenerlo y asegurarme de que sea el id que se genera en la misma conexión, cosa que no ocurriría haciendo un select del ultimo id generado porque si justo hubo un cliente que generó un pedido un segundo después, el select me devolvería un id de otro cliente)
-
-CREATE TRIGGER `tr_add_new_pedido`
-AFTER INSERT ON `PEDIDOS`
-FOR EACH ROW
-SET @idNuevoPedido = NEW.id_pedido;
-
+/*
+PROCEDURES
+*/
 -- --------------------------------------
 -- SP sp_generar_pedidos
 -- --------------------------------------
@@ -344,6 +336,8 @@ SET @idNuevoPedido = NEW.id_pedido;
 -- ..4.b La cantidad solicitada sea mayor que 0
 -- ..4.c El stock del producto sea mayor que 0
 -- 5. Si las condiciones anteriores hacen que no se pueda ingresar ningún registro a la tabla detalle de pedidos, se borra el registro recién ingresado a la tabla pedidos.
+
+-- NOTA: Los errores se van guardando en una tabla temporaria
 
 DROP PROCEDURE IF EXISTS sp_generar_pedidos;
 DELIMITER $$
@@ -391,7 +385,12 @@ ELSE
 						INSERT INTO errores VALUES (CONCAT("Uno de los productos solicitados (en la posicion ",i,") tenia stock 0 y fue borrado del pedido. "));
 						SET j = j+1;
 					ELSE 
-						INSERT INTO DETALLE_PEDIDOS (fk_id_producto, cantidad,fk_id_pedido ) VALUES ((SELECT JSON_EXTRACT(json_pedido,CONCAT('$[',i,'].producto')) AS producto),(SELECT JSON_EXTRACT(json_pedido,CONCAT('$[',i,'].cantidad')) AS cantidad),@idNuevoPedido);
+						SET @json_prod = (SELECT JSON_EXTRACT(json_pedido,CONCAT('$[',i,'].producto')));
+						SET @json_cant = (SELECT JSON_EXTRACT(json_pedido,CONCAT('$[',i,'].cantidad')));
+						INSERT INTO DETALLE_PEDIDOS (fk_id_producto, cantidad,fk_id_pedido ) VALUES (@json_prod,@json_cant,@idNuevoPedido);
+						UPDATE PRODUCTOS
+						SET stock = @nuevo_stock 
+						WHERE id_producto = @json_prod;
 					-- cierro 5
 					END IF;
 				-- cierro 4
@@ -451,96 +450,6 @@ IF (IDcliente = 0 OR IDpedido = 0) THEN
 	END IF;
 END $$
 
-
-
--- --------------------------------------
--- SP sp_aprobar_pedido
--- --------------------------------------
-
--- SP que modifica el estado del pedido, pasandolo a aprobado y dando de baja las cantidades de stock de cada producto segun la orden de pedidos del cliente. Luego de la modificacion se agrega un registro a la tabla MODIFICACION_ESTADOS.
--- Los parámetros de entrada son los id de empleado y pedido.
-
-DROP PROCEDURE IF EXISTS sp_aprobar_pedido;
-DELIMITER $$
-CREATE PROCEDURE `sp_aprobar_pedido` (IN idpedido INT, IN idempleado INT)
-BEGIN
-DECLARE i INT;
-DECLARE n INT;
-set @IDpedido = idpedido;
-set @EstadoPedido = (SELECT fk_id_estado FROM PEDIDOS WHERE id_pedido = @IDpedido);
-IF ((@EstadoPedido != "APR") AND (@EstadoPedido != "SBY")) THEN 
-UPDATE PEDIDOS SET fk_id_estado = "APR" WHERE id_pedido = @IDpedido;
-INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES (idpedido,idempleado,CURRENT_TIMESTAMP(),"APR", @EstadoPedido);
-DROP TABLE IF EXISTS stock_temporal;
-CREATE TABLE stock_temporal (SELECT fk_id_producto AS IDproducto, cantidad FROM DETALLE_PEDIDOS WHERE fk_id_pedido = @IDpedido);
-SET n = (SELECT COUNT(*) FROM stock_temporal);
-SET i=0;
-WHILE i < n DO
-SET @id_pedido_i = (SELECT IDproducto FROM stock_temporal LIMIT i,1);
-UPDATE PRODUCTOS
-SET stock = stock - (SELECT cantidad FROM stock_temporal LIMIT i,1) 
-WHERE id_producto = @id_pedido_i;
-SET i = i + 1;
-END WHILE;
-DROP TABLE stock_temporal;
-ELSE
-SET @msj = "El pedido ya estaba aprobado";
-SELECT @msj;
-END IF;
-END $$
-
--- -----------------------------------------------
--- TRIGGERS tr_verificar_stock al insertar datos
--- -----------------------------------------------
-
--- Este trigger es disparado justo antes de agregar un pedido a la tabla DETALLE_PEDIDOS. Para cada producto, verifica que la cantidad solicitada sea menor o igual a las existencias en stock. Si se solicitan más productos de los que hay en stock, en el pedido sólo se carga lo que hay en stock.
-
-DROP TRIGGER IF EXISTS tr_verificar_stock_on_insert;
-DELIMITER $$
-CREATE TRIGGER `tr_verificar_stock_on_insert`
-BEFORE INSERT ON DETALLE_PEDIDOS
-FOR EACH ROW
-BEGIN
-SET @msj = '';
-SET @stock_existente = (SELECT stock FROM PRODUCTOS WHERE id_producto = NEW.fk_id_producto);
-IF NEW.cantidad > @stock_existente THEN
-SET NEW.cantidad = @stock_existente;
-SET @msj="Las cantidades solicitadas de uno o varios de los productos son mayores al stock disponible. En esos casos el pedido se armó con el stock existente"; 
-ELSE 
-SET @msj="Los productos se agregaron sin problemas.";
-END IF;
-END$$
-
--- --------------------------------------------------
--- TRIGGERS tr_verificar_stock al modificar pedidos
--- --------------------------------------------------
-
--- Este trigger es disparado justo antes de agregar un pedido a la tabla DETALLE_PEDIDOS. Para cada producto, verifica que la cantidad solicitada sea menor o igual a las existencias en stock. Si se solicitan más productos de los que hay en stock, en el pedido sólo se carga lo que hay en stock.
-
-DROP TRIGGER IF EXISTS tr_verificar_stock_on_update;
-DELIMITER $$
-CREATE TRIGGER `tr_verificar_stock_on_update`
-BEFORE UPDATE ON DETALLE_PEDIDOS
-FOR EACH ROW
-BEGIN
-SET @msj = '';
-SET @stock_existente = (SELECT stock FROM PRODUCTOS WHERE id_producto = NEW.fk_id_producto);
-IF NEW.cantidad > @stock_existente THEN
-SET NEW.cantidad = @stock_existente;
-SET @msj="Las cantidades solicitadas de uno o varios de los productos es mayor al stock disponible. En esos casos el pedido se armó con el stock existente"; 
-END IF;
-END$$
-
--- --------------------------------------
--- TRIGGER tr_auditar_estados
--- --------------------------------------
-
--- Para obtener el valor del estado anterior en el pedido, y asi poder guardarlo en la tabla MODIFICACION_ESTADOS, que es como una auditoria de los estados por los que pasa un pedido.
-
-CREATE TRIGGER `tr_auditar_estados`
-AFTER UPDATE ON PEDIDOS
-FOR EACH ROW
-SET @estadoAnterior = OLD.fk_id_estado;
 
 -- --------------------------------------
 -- SP sp_pivot_listas
@@ -613,6 +522,7 @@ IF EXISTS (SELECT id_pedido,fk_id_estado FROM PEDIDOS WHERE id_pedido=IDpedido A
 				CASE
 				WHEN tipo_modificacion = "UPDATE" THEN
 				UPDATE DETALLE_PEDIDOS SET cantidad = qty WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto;
+				SET @msj = "El pedido se actualizó con éxito";
 						SELECT @msj;
 				WHEN tipo_modificacion = "ADD" THEN
 					IF NOT EXISTS (SELECT fk_id_producto FROM DETALLE_PEDIDOS WHERE fk_id_pedido = IDpedido AND fk_id_producto = IDproducto) THEN 
@@ -634,17 +544,6 @@ IF EXISTS (SELECT id_pedido,fk_id_estado FROM PEDIDOS WHERE id_pedido=IDpedido A
 END $$
 
 
-
--- --------------------------------------
--- TRIGGER add_new_reparto
--- --------------------------------------
-
--- Este trigger es para tomar el id generado al momento de cargar un reparto y usar el mismo id para la tabla de detalle de repartos
-
-CREATE TRIGGER `tr_add_new_reparto`
-AFTER INSERT ON `REPARTOS`
-FOR EACH ROW
-SET @idNuevoReparto = NEW.id_reparto;
 
 -- ----------------------------------
 -- SP sp_generar_reparto
@@ -673,61 +572,54 @@ PREPARE sentencia FROM @sql;
 EXECUTE sentencia;
 DEALLOCATE PREPARE sentencia;
 SET peso = (SELECT `peso total` FROM totales WHERE zona = IDzona AND fecha = fecha_elegida);
-
-	IF NOT EXISTS (SELECT fk_id_zona FROM repartos_por_fecha WHERE fk_id_zona = IDzona) THEN
-		DROP TABLE IF EXISTS vehiculos_libres;
-		CREATE TEMPORARY TABLE vehiculos_libres (SELECT vl.id_vehiculo
-		FROM VEHICULOS vl
-		LEFT JOIN repartos_por_fecha vr
-			ON vl.id_vehiculo = vr.fk_id_vehiculo
-			WHERE fk_id_vehiculo IS NULL);
-			SET k = (SELECT COUNT(*) FROM vehiculos_libres);
-		SET j=0;
-		SET @err = '';
-		iterar_vehiculos_libres: WHILE j < k DO
-		SELECT * FROM vehiculos_libres LIMIT j,1 INTO IDlibre;
-		IF ((SELECT max_peso FROM VEHICULOS v WHERE v.id_vehiculo = IDlibre)>peso) THEN
-			INSERT INTO REPARTOS (fk_id_vehiculo,fk_chofer,fk_id_zona,fecha) VALUES (IDlibre,1,IDzona,fecha_elegida);
-			INSERT INTO DETALLE_REPARTOS (fk_id_reparto,fk_id_pedido)((SELECT @idNuevoReparto, p.id_pedido FROM pedidos_aprobados p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = IDzona AND p.fecha_pedido = fecha_elegida));
-			LEAVE iterar_vehiculos_libres;
+-- Si peso=0 significa que no hubo pedidos para la zona
+IF peso = 0 THEN
+	SET @err = CONCAT("No hay pedidos para la zona ",IDzona," en el día ",fecha_elegida);
+ELSE
+		IF NOT EXISTS (SELECT fk_id_zona FROM repartos_por_fecha WHERE fk_id_zona = IDzona) THEN
+			DROP TABLE IF EXISTS vehiculos_libres;
+			CREATE TEMPORARY TABLE vehiculos_libres (SELECT vl.id_vehiculo
+			FROM VEHICULOS vl
+			LEFT JOIN repartos_por_fecha vr
+				ON vl.id_vehiculo = vr.fk_id_vehiculo
+				WHERE fk_id_vehiculo IS NULL);
+				SET k = (SELECT COUNT(*) FROM vehiculos_libres);
+			SET j=0;
+			SET @err = '';
+			iterar_vehiculos_libres: WHILE j < k DO
+			SELECT * FROM vehiculos_libres LIMIT j,1 INTO IDlibre;
+			IF ((SELECT max_peso FROM VEHICULOS v WHERE v.id_vehiculo = IDlibre)>peso) THEN
+				INSERT INTO REPARTOS (fk_id_vehiculo,fk_chofer,fk_id_zona,fecha) VALUES (IDlibre,1,IDzona,fecha_elegida);
+				INSERT INTO DETALLE_REPARTOS (fk_id_reparto,fk_id_pedido)((SELECT @idNuevoReparto, p.id_pedido FROM pedidos_aprobados p INNER JOIN CLIENTES c ON p.fk_id_cliente = c.id_cliente WHERE c.fk_zona = IDzona AND p.fecha_pedido = fecha_elegida));
+				LEAVE iterar_vehiculos_libres;
+			ELSE
+				SET @err = CONCAT(@err," El vehiculo con id ",IDlibre," no se pudo seleccionar porque su peso maximo es menor que el de la zona");
+			END IF;
+			SET j = j + 1;
+			IF (j>=k) THEN
+			DROP TABLE IF EXISTS pedidos_zona;
+			CREATE TEMPORARY TABLE pedidos_zona (SELECT c.fk_zona, p.id_pedido, p.fecha_pedido FROM CLIENTES c INNER JOIN pedidos_aprobados p ON p.fk_id_cliente = c.id_cliente WHERE fk_zona=IDzona AND fecha_pedido = fecha_elegida);
+			SET @cant_pedidos_sin_reparto = (SELECT COUNT(id_pedido) FROM pedidos_zona GROUP BY fk_zona);
+			SET n = 0;
+			WHILE n < @cant_pedidos_sin_reparto DO
+			CALL sp_modificar_estado((SELECT id_pedido FROM pedidos_zona LIMIT n,1),1,"SBY");
+			INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES ((SELECT id_pedido FROM pedidos_zona LIMIT n,1),1,CURRENT_TIMESTAMP(),"SBY", "APR");
+			SET n = n +1;
+			END WHILE;
+				SET @err = "No se pudo generar el reparto debido a que ningún vehículo puede llevar tanta carga. Se pasaron los pedidos al estado STAND-BY para su división en repartos más chicos";
+			DROP TABLE IF EXISTS pedidos_zona;	
+			END IF;
+			END WHILE iterar_vehiculos_libres;
 		ELSE
-			SET @err = CONCAT(@err," El vehiculo con id ",IDlibre," no se pudo seleccionar porque su peso maximo es menor que el de la zona");
+			SET @err = "La zona ya tiene un reparto asignado. Para seleccionar otro vehiculo, ir al procedimiento correspondiente";
 		END IF;
-		SET j = j + 1;
-		IF (j>=k) THEN
-		DROP TABLE IF EXISTS pedidos_zona;
-		CREATE TEMPORARY TABLE pedidos_zona (SELECT c.fk_zona, p.id_pedido, p.fecha_pedido FROM CLIENTES c INNER JOIN pedidos_aprobados p ON p.fk_id_cliente = c.id_cliente WHERE fk_zona=IDzona AND fecha_pedido = fecha_elegida);
-		SET @cant_pedidos_sin_reparto = (SELECT COUNT(id_pedido) FROM pedidos_zona GROUP BY fk_zona);
-		SET n = 0;
-		WHILE n < @cant_pedidos_sin_reparto DO
-		CALL sp_modificar_estado((SELECT id_pedido FROM pedidos_zona LIMIT n,1),1,"SBY");
-		INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES ((SELECT id_pedido FROM pedidos_zona LIMIT n,1),1,CURRENT_TIMESTAMP(),"SBY", "APR");
-		SET n = n +1;
-		END WHILE;
-			SET @err = "No se pudo generar el reparto debido a que ningún vehículo puede llevar tanta carga. Se pasaron los pedidos al estado STAND-BY para su división en repartos más chicos";
-		DROP TABLE IF EXISTS pedidos_zona;	
-		END IF;
-		END WHILE iterar_vehiculos_libres;
-	ELSE
-		SET @err = "La zona ya tiene un reparto asignado. Para seleccionar otro vehiculo, ir al procedimiento correspondiente";
-	END IF;
-
+END IF;
 IF (@err !='') THEN 
 	SELECT @err;  
 END IF;
 END $$
 
--- --------------------------------------
--- TRIGGER tr_pasar_a_reparto
--- --------------------------------------
 
--- Cambia el estado de los pedidos involucrados en un reparto determinado a "REP"
-
-CREATE TRIGGER `tr_pasar_a_reparto`
-AFTER INSERT ON `DETALLE_REPARTOS`
-FOR EACH ROW
-SET @idPedido = NEW.fk_id_pedido;
-CALL sp_modificar_estado(@idPedido, 1, "REP")
 
 -- ----------------------------------
 -- SP sp_cargar_km
@@ -788,8 +680,10 @@ CREATE PROCEDURE `sp_modificar_estado` (IN idpedido INT, IN idempleado INT, IN e
 BEGIN
 set @IDpedido = idpedido;
 set @EstadoPedido = (SELECT fk_id_estado FROM PEDIDOS WHERE id_pedido = @IDpedido);
-UPDATE PEDIDOS SET fk_id_estado = estado WHERE id_pedido = @IDpedido;
-INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES (idpedido,idempleado,CURRENT_TIMESTAMP(),estado, @EstadoPedido); 
+	UPDATE PEDIDOS SET fk_id_estado = estado WHERE id_pedido = @IDpedido;
+	INSERT INTO MODIFICACION_ESTADOS (fk_id_pedido,fk_id_empleado,hora_modificacion,fk_id_estado,fk_id_estado_anterior) VALUES (idpedido,idempleado,CURRENT_TIMESTAMP(),estado, @EstadoPedido); 
+	SET @msj = "El estado se modificó con éxito";
+	SELECT @msj;
 END $$
 
 -- ///////////////////////////////////
@@ -842,26 +736,179 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 END $$
 
+-- -----------------------------------------------------------------------
+-- Total de cada cliente para una determinada fecha o mes
+-- -----------------------------------------------------------------------
+-- Para armar una especie de ranking de clientes (para ver las cantidades y los montos en un mismo gráfico, divido los montos por 1000 y multiplico cantidades por 100)
 
--- /////////////////////////////
--- FUNCTIONS
--- /////////////////////////////
+-- 1) DIARIO
+
+DROP PROCEDURE IF EXISTS sp_ranking_diario;
+DELIMITER $$
+CREATE PROCEDURE `sp_ranking_diario`(IN fecha DATE)
+BEGIN
+SELECT razon_social, SUM(Total_renglon/1000) AS "Total pedido", SUM(cantidad*100) AS "Total cantidades" FROM pedido_cliente  WHERE fecha = fecha  GROUP BY id_cliente ORDER BY `Total pedido`;
+END $$
+
+-- 2) MENSUAL
+
+DROP PROCEDURE IF EXISTS sp_ranking_mensual;
+DELIMITER $$
+CREATE PROCEDURE `sp_ranking_mensual`(IN month_number INT)
+BEGIN
+SELECT razon_social, SUM(Total_renglon/1000) AS "Total pedido", SUM(cantidad*100) AS "Total cantidades" FROM pedido_cliente  WHERE MONTH(fecha) = month_number  GROUP BY id_cliente ORDER BY `Total pedido`;
+END $$
+
+-- -----------------------------------------------------------------------
+-- Relación cantidad de baterías por kilómetro recorrido
+-- -----------------------------------------------------------------------
+
+DROP PROCEDURE IF EXISTS sp_km_cantidad_ratio;
+DELIMITER $$
+CREATE PROCEDURE `sp_km_cantidad_ratio`()
+BEGIN
+DROP TABLE IF EXISTS ratio;
+CREATE TEMPORARY TABLE ratio 
+(fk_id_reparto INT NOT NULL,
+fk_id_zona INT NOT NULL,
+fecha DATE NOT NULL,
+cantidades INT NOT NULL,
+kilometros INT NOT NULL);
+INSERT INTO ratio
+(SELECT fk_id_reparto,fk_id_zona, fecha, cantidades,kilometros FROM km_cantidad);
+SELECT fecha, SUM(cantidades) AS qty, SUM(kilometros) AS km, (SUM(cantidades)/SUM(kilometros)*100) as rt from ratio GROUP BY fecha ORDER BY fecha ASC;
+END $$
+
+/*
+TRIGGERS
+*/
+-- --------------------------------------
+-- TRIGGER add_new_pedido
+-- --------------------------------------
+
+-- Este trigger es para tomar el id generado al momento de cargar un pedido (como el id es autoincremental y se genera automáticamente, no lo sabemos de antemano, y me pareció que esta era una buena manera de obtenerlo y asegurarme de que sea el id que se genera en la misma conexión, cosa que no ocurriría haciendo un select del ultimo id generado porque si justo hubo un cliente que generó un pedido un segundo después, el select me devolvería un id de otro cliente)
+
+CREATE TRIGGER `tr_add_new_pedido`
+AFTER INSERT ON `PEDIDOS`
+FOR EACH ROW
+SET @idNuevoPedido = NEW.id_pedido;
+
+-- -----------------------------------------------
+-- TRIGGERS tr_verificar_stock al insertar datos
+-- -----------------------------------------------
+
+-- Este trigger es disparado justo antes de agregar un pedido a la tabla DETALLE_PEDIDOS. Para cada producto, verifica que la cantidad solicitada sea menor o igual a las existencias en stock. Si se solicitan más productos de los que hay en stock, en el pedido sólo se carga lo que hay en stock.
+
+DROP TRIGGER IF EXISTS tr_verificar_stock_on_insert;
+DELIMITER $$
+CREATE TRIGGER `tr_verificar_stock_on_insert`
+BEFORE INSERT ON DETALLE_PEDIDOS
+FOR EACH ROW
+BEGIN
+SET @msj = '';
+SET @stock_existente = (SELECT stock FROM PRODUCTOS WHERE id_producto = NEW.fk_id_producto);
+IF NEW.cantidad > @stock_existente THEN
+SET NEW.cantidad = @stock_existente;
+SET @nuevo_stock = 0;
+SET @msj="Las cantidades solicitadas de uno o varios de los productos son mayores al stock disponible. En esos casos el pedido se armó con el stock existente"; 
+ELSE 
+SET @nuevo_stock = @stock_existente - NEW.cantidad;
+SET @msj="Los productos se agregaron sin problemas.";
+END IF;
+END$$
+
+-- --------------------------------------------------
+-- TRIGGERS tr_verificar_stock al modificar pedidos
+-- --------------------------------------------------
+
+-- Este trigger es disparado justo antes de agregar un pedido a la tabla DETALLE_PEDIDOS. Para cada producto, verifica que la cantidad solicitada sea menor o igual a las existencias en stock. Si se solicitan más productos de los que hay en stock, en el pedido sólo se carga lo que hay en stock.
+
+DROP TRIGGER IF EXISTS tr_verificar_stock_on_update;
+DELIMITER $$
+CREATE TRIGGER `tr_verificar_stock_on_update`
+BEFORE UPDATE ON DETALLE_PEDIDOS
+FOR EACH ROW
+BEGIN
+SET @msj = '';
+SET @stock_existente = (SELECT stock FROM PRODUCTOS WHERE id_producto = NEW.fk_id_producto);
+IF NEW.cantidad > @stock_existente THEN
+SET NEW.cantidad = @stock_existente;
+SET @msj="Las cantidades solicitadas de uno o varios de los productos es mayor al stock disponible. En esos casos el pedido se armó con el stock existente"; 
+END IF;
+END$$
+
+-- --------------------------------------
+-- TRIGGER tr_auditar_estados
+-- --------------------------------------
+
+-- Para obtener el valor del estado anterior en el pedido, y asi poder guardarlo en la tabla MODIFICACION_ESTADOS, que es como una auditoria de los estados por los que pasa un pedido.
+
+CREATE TRIGGER `tr_auditar_estados`
+AFTER UPDATE ON PEDIDOS
+FOR EACH ROW
+SET @estadoAnterior = OLD.fk_id_estado;
+
+
+
+-- --------------------------------------
+-- TRIGGER add_new_reparto
+-- --------------------------------------
+
+-- Este trigger es para tomar el id generado al momento de cargar un reparto y usar el mismo id para la tabla de detalle de repartos
+
+CREATE TRIGGER `tr_add_new_reparto`
+AFTER INSERT ON `REPARTOS`
+FOR EACH ROW
+SET @idNuevoReparto = NEW.id_reparto;
+
+-- --------------------------------------
+-- TRIGGER tr_pasar_a_reparto
+-- --------------------------------------
+
+-- Cambia el estado de los pedidos involucrados en un reparto determinado a "REP"
+
+CREATE TRIGGER `tr_pasar_a_reparto`
+AFTER INSERT ON `DETALLE_REPARTOS`
+FOR EACH ROW
+SET @idPedido = NEW.fk_id_pedido;
+CALL sp_modificar_estado(@idPedido, 1, "REP");
+
+/*
+FUNCIONES
+*/
+-- --------------------------------------
+-- FUNCION fn_generar_variable_lista
+-- --------------------------------------
+
+-- Función para poder usar la variable id_lista en la vista de precios por lista en base al id del cliente (para poder usar el id del cliente como variable y no como valor fijo en la cláusula de WHERE)
 
 CREATE DEFINER=`root`@`localhost` FUNCTION `fn_generar_variable_lista`(cliente INT) RETURNS int
     DETERMINISTIC
 RETURN (SELECT fk_lista_precios FROM CLIENTES WHERE id_cliente = cliente);
 
-CREATE DEFINER=`root`@`localhost` FUNCTION `fn_peso_individual`(peso FLOAT,cantidad INT) RETURNS float
-    NO SQL
-RETURN (peso*cantidad);
+-- --------------------------------------
+-- FUNCION fn_volumen_individual
+-- --------------------------------------
+
+-- Función para calcular el volumen de cada producto en un determinado pedido - el volumen es para la cantidada total de dicho producto. Los parámetros de entrada son las dimensiones del producto -en mm- y la salida es el volumen en dm3.
 
 CREATE DEFINER=`root`@`localhost` FUNCTION `fn_volumen_individual`(alto INT,ancho INT, largo INT, cantidad INT) RETURNS decimal(8,2)
     NO SQL
 RETURN (alto/100*ancho/100*largo/100*cantidad);
 
--- //////////////////////////
--- VIEWS
--- /////////////////////////
+-- --------------------------------------
+-- FUNCION fn_peso_individual
+-- --------------------------------------
+
+-- Función para calcular el peso por producto en cada pedido. (= peso individual x cantidad)
+
+CREATE DEFINER=`root`@`localhost` FUNCTION `fn_peso_individual`(peso FLOAT,cantidad INT) RETURNS float
+    NO SQL
+RETURN (peso*cantidad);
+
+/*
+VISTAS
+*/
 -- ----------------------------------------
 -- VISTA pedidos_detallados
 -- ----------------------------------------
@@ -920,8 +967,8 @@ CREATE OR REPLACE VIEW pedidos_aprobados AS
 -- VISTA dimensiones
 -- ----------------------------------------
 
--- La siguiente vista muestra las dimensiones de cada producto y los valores calculados de volumen y peso total por producto para todos los pedidos. Los datos se muestran ordenados por zona. Eventualmente se pueden filtrar por zona y fecha. Más adelante esta vista se usa para calcular los volumenes, pesos y cantidades totales por zona para una fecha determinada.
--- Basada en las tablas: CLIENTES, PEDIDOS, DETALLE_PEDIDOS, PRODUCTOS
+-- La siguiente vista muestra las dimensiones de cada producto y los valores calculados de volumen y peso total por producto para todos los pedidos. Los datos se muestran ordenados por zona. Eventualmente se pueden filtrar por zona y fecha. Más adelante esta vista se usa para calcular los volúmenes, pesos y cantidades totales por zona para una fecha determinada.
+-- Basada en las tablas/vistas: CLIENTES, pedidos_aprobados, DETALLE_PEDIDOS, PRODUCTOS
 
 CREATE OR REPLACE VIEW dimensiones AS
 (SELECT c.fk_zona AS 'zona', p.fecha_pedido AS 'fecha', p.id_pedido, p.fk_id_estado AS 'estado', d.cantidad AS 'qty', pro.sku AS 'SKU', pro.dimension_longitud AS 'longitud', pro.dimension_alto AS 'alto',pro.dimension_ancho AS 'ancho', pro.dimension_peso AS 'peso',fn_volumen_individual(pro.dimension_longitud,pro.dimension_alto,pro.dimension_ancho, d.cantidad) AS 'volumen',fn_peso_individual(pro.dimension_peso, d.cantidad) AS 'peso_total' FROM CLIENTES c INNER JOIN pedidos_aprobados p ON c.id_cliente = p.fk_id_cliente INNER JOIN DETALLE_PEDIDOS d ON d.fk_id_pedido = p.id_pedido INNER JOIN PRODUCTOS pro ON d.fk_id_producto=pro.id_producto ORDER BY c.fk_zona DESC,p.id_pedido ASC);
@@ -967,7 +1014,7 @@ CREATE OR REPLACE VIEW totales AS (SELECT zona, fecha, sum(volumen) AS "volumen 
 -- ------------------------------------
 -- Vista totales por mes
 -- ------------------------------------
--- Igual a la anterior pero con las cantidades, pesos y volúmenes agrupados por mes. 
+-- Igual a la anterior pero con las cantidades, pesos y volúmenes agrupados por mes. Se basa en la vista dimensiones
 
 CREATE OR REPLACE VIEW totales_por_mes AS (SELECT zona, MONTHNAME(fecha) as mes, sum(volumen) AS "volumen total", sum(peso_total) AS "peso total", sum(qty) AS "cantidad total" FROM dimensiones GROUP BY mes, zona order by mes);
 
@@ -977,6 +1024,13 @@ CREATE OR REPLACE VIEW totales_por_mes AS (SELECT zona, MONTHNAME(fecha) as mes,
 -- ------------------------------------
 -- SE agrupan los productos de cada reparto para conocer las cantidades de cada uno en un reparto determinado
 
-CREATE OR REPLACE VIEW totales_por_reparto AS (SELECT fk_id_reparto, sku, SUM(cantidad) FROM (SELECT dr.fk_id_reparto, dr.fk_id_pedido, pd.id_cliente, pd.sku, pd.cantidad FROM DETALLE_REPARTOS dr INNER JOIN pedidos_detallados pd ON dr.fk_id_pedido = pd.id_pedido) as detalle GROUP BY fk_id_reparto,sku)
+CREATE OR REPLACE VIEW totales_por_reparto AS (SELECT fk_id_reparto, sku, SUM(cantidad) AS total_cantidad FROM (SELECT dr.fk_id_reparto, dr.fk_id_pedido, pd.id_cliente, pd.sku, pd.cantidad FROM DETALLE_REPARTOS dr INNER JOIN pedidos_detallados pd ON dr.fk_id_pedido = pd.id_pedido) as detalle GROUP BY fk_id_reparto,sku);
+
+-- ------------------------------------
+-- Vista km_cantidad
+-- ------------------------------------
+-- Relaciona los kilómetros recorridos con las baterías entregadas en cada reparto
+
+CREATE OR REPLACE VIEW km_cantidad AS (SELECT tr.fk_id_reparto, r.fk_id_zona, SUM(tr.total_cantidad) as cantidades, (r.km_fin - r.km_ini) as kilometros, r.fecha from totales_por_reparto tr INNER JOIN REPARTOS r ON r.id_reparto = tr.fk_id_reparto GROUP BY tr.fk_id_reparto order by tr.fk_id_reparto);
 
 

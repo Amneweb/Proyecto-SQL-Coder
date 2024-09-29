@@ -255,17 +255,17 @@ SELECT * FROM DETALLE_REPARTOS;
 -- -----------------------------------------------------------------------------------------
 -- Los parámetros son: id_reparto, id_chofer, momento del reparto (antes o después), kilometraje que marca el odómetro del vehículo en el momento indicado
 
-CALL sp_cargar_km(4,1, "INI", 200);
-CALL sp_cargar_km(4,1, "FIN", 250);
+CALL sp_cargar_km(1,1, "INI", 200);
+CALL sp_cargar_km(1,1, "FIN", 250);
 
 -- Se pueden probar datos erróneos
 -- 1) Se trata de insertar un km final menor al inicial
 
-CALL sp_cargar_km(4,1,"FIN",190);
+CALL sp_cargar_km(1,1,"FIN",190);
 
 -- 2) Se trata de insertar el km de un reparto con el id del chofer que no hizo el reparto
 
-CALL sp_cargar_km(4,2,"FIN",230);
+CALL sp_cargar_km(1,2,"FIN",230);
 
 
 -- DATOS PARA VER INFORMES 
@@ -330,7 +330,8 @@ CALL sp_generar_reparto(3, "2024-09-03");
 CALL sp_generar_reparto(1, "2024-07-03");
 CALL sp_generar_reparto(2, "2024-07-03");
 CALL sp_generar_reparto(3, "2024-07-03");
-
+CALL sp_cargar_km(2,1, "INI", 180);
+CALL sp_cargar_km(2,1, "FIN", 250);
 CALL sp_cargar_km(3,1, "INI", 200);
 CALL sp_cargar_km(3,1, "FIN", 250);
 CALL sp_cargar_km(4,1, "INI", 210);
@@ -356,6 +357,7 @@ CALL sp_cargar_km(13,1, "FIN", 590);
 
 
 -- INFORMES
+-- Los informes ya generados se pueden ver con sus gráficos correspondientes en la hoja de google sheets cuyo link está en el readme.
 
 -- Ranking diario
 CALL sp_ranking_diario("2024-08-31");

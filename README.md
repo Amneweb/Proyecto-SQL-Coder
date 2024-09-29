@@ -37,19 +37,16 @@ Los clientes hacen los pedidos por whatsapp, un empleado pasa los pedidos a una 
 # Informes :chart_with_upwards_trend:
 A continuación se presentan algunos de los posibles informes generados con las tablas creadas para el proyecto. Los mismos son:
 - Totales - cantidades, pesos, volúmenes - por zona (se pueden filtrar por fecha)
-- Kilómetros/baterias: (en un periodo de tiempo determinado, que puede ser dia, semana o mes)
-Se muestra el "rendimiento" del recorrido de cada vehiculo teniendo en cuenta los kilómetros andados. Se puede evaluar si conviene hacer muchos viajes cortos o uno largo
-- Baterias/zona: para evaluar la zona con mas compras en un determinado periodo de tiempo
-- Baterias/kilometro: (para cada cliente) para evaluar si conviene llevar las baterías a los clientes de más lejos, en funcion de las baterías que compra "por kilómetro". 
+- Baterias/kilometro: para evaluar si conviene llevar las baterías a los clientes de más lejos, en funcion de las baterías que compra "por kilómetro". 
 - Baterías por zona (por día, por mes o por año)
 
-Algunos de los informes se pueden ver en el siguiente enlace:
+Algunos de los informes y sus gráficos se pueden ver en el siguiente enlace:
 https://docs.google.com/spreadsheets/d/1acsjlpZ8HwZZbNozNAOFZt7q1ZIRVsGQrWouIJMt6YQ/edit?usp=sharing
 
 
 # A futuro
 En lo que al código actual se refiere, quedan por mejorar varios aspectos, entre ellos: 
-- La generación de los repartos automáticamente para todas las zonas y la eventual división de un reparto en varios mas chicos, si es que el peso o las cantidades de una zona son mayores a las máximas por vehículo. 
+- La generación de los repartos automáticamente para todas las zonas y la eventual división de un reparto en varios más chicos.
 - La asignación de un chofer por vehículo
 - La generación de varios repartos para una misma zona cuando las cantidades o pesos son mayores que las permitidas por vehículos
 - Un SP para armar las vistas de totales por día, fecha o año dinámicamente, sin tener que armar una vista para cada periodo. (Ahora hay una vista por dia y una vista por mes, separadas)
@@ -95,12 +92,13 @@ Todo ese proceso se guarda en tablas de excel y papeles, que podrían ser reempl
 > Los scripts sql para probar el proyecto se encuentran en la carpeta WindwardDB y se deben correr en el siguiente orden:
 > - schema.sql - contiene la generación y modificación de tablas
 > - datos.sql - carga los datos en las tablas
-> - procedures.sql - contiene los triggers, funciones y stored procedures
+> - procedures.sql - contiene stored procedures
+> - triggers.sql - con los triggers de cada tabla
 > - functions.sql - contiene las funciones
 > - views.sql - contiene las vistas
 
 > [!CAUTION]  
-> Hay un archivo general.sql en la carpeta raiz, que contiene todos los scripts en uno y se podría correr en reemplazo de todos los anteriores, pero me ha pasado que **no se cargan las funciones o los triggers** (y no se genera ningún mensaje de error) y luego no funcionan los scripts de procedures o vistas.
+> Hay un archivo general.sql en la carpeta raiz, que contiene todos los scripts juntos y se podría correr en reemplazo de todos los anteriores, pero me ha pasado que **no se cargan las funciones o los triggers** (y no se genera ningún mensaje de error) y luego no funcionan los scripts de procedures o vistas.
 
 Cada uno de los archivos de procedures, functions y views contiene la descripción del proceso, función o vista correspondiente, las tablas que involucran y lo que se quiere obtener.
 
@@ -123,8 +121,7 @@ Para entender a grandes rasgos la idea del funcionamiento de la app, a continuac
 
 
 ### MANEJO DE ERRORES 
-Importante: NO todos los procesos y funciones tienen programado un manejo de errores, por lo que si se prueban los procesos con claves incorrectas o datos no válidos, podría haber errores, no por el proceso en sí, sino por los datos de entrada.
-
+El manejo de errores de la misma manera que el ejemplo en clase. A futuro debería utilizarse SIGNAL SQLSTATE. 
 
 # TABLAS
 
