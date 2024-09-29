@@ -126,6 +126,7 @@ El manejo de errores de la misma manera que el ejemplo en clase. A futuro deber�
 # TABLAS
 
 El siguiente enlace lleva a un archivo de google sheets con la definición de las tablas
+
 https://docs.google.com/spreadsheets/d/1-eUCWY-VkGH3vUq4jT_UxRgGNy-ChXFRJeHKCe7AbH0/edit?usp=sharing
 
 
@@ -133,8 +134,6 @@ https://docs.google.com/spreadsheets/d/1-eUCWY-VkGH3vUq4jT_UxRgGNy-ChXFRJeHKCe7A
 
 
 # DIAGRAMA ENTIDAD RELACION
-
-La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf de la lista de archivos y carpetas de este repo.
 
 > [!NOTE]  
 > En el dibujo la tabla vehículos no tiene los atributos de máximos, pero sí van, tal como aparecen en el archivo sql y la definición de tablas
