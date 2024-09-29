@@ -113,6 +113,13 @@ CREATE OR REPLACE VIEW totales_por_mes AS (SELECT zona, MONTHNAME(fecha) as mes,
 -- ------------------------------------
 -- SE agrupan los productos de cada reparto para conocer las cantidades de cada uno en un reparto determinado
 
-CREATE OR REPLACE VIEW totales_por_reparto AS (SELECT fk_id_reparto, sku, SUM(cantidad) FROM (SELECT dr.fk_id_reparto, dr.fk_id_pedido, pd.id_cliente, pd.sku, pd.cantidad FROM DETALLE_REPARTOS dr INNER JOIN pedidos_detallados pd ON dr.fk_id_pedido = pd.id_pedido) as detalle GROUP BY fk_id_reparto,sku)
+CREATE OR REPLACE VIEW totales_por_reparto AS (SELECT fk_id_reparto, sku, SUM(cantidad) AS total_cantidad FROM (SELECT dr.fk_id_reparto, dr.fk_id_pedido, pd.id_cliente, pd.sku, pd.cantidad FROM DETALLE_REPARTOS dr INNER JOIN pedidos_detallados pd ON dr.fk_id_pedido = pd.id_pedido) as detalle GROUP BY fk_id_reparto,sku);
+
+-- ------------------------------------
+-- Vista km_cantidad
+-- ------------------------------------
+-- Relaciona los kilómetros recorridos con las baterías entregadas en cada reparto
+
+CREATE OR REPLACE VIEW km_cantidad AS (SELECT tr.fk_id_reparto, r.fk_id_zona, SUM(tr.total_cantidad) as cantidades, (r.km_fin - r.km_ini) as kilometros, r.fecha from totales_por_reparto tr INNER JOIN REPARTOS r ON r.id_reparto = tr.fk_id_reparto GROUP BY tr.fk_id_reparto order by tr.fk_id_reparto);
 
 
