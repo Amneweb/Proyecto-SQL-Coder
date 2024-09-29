@@ -129,6 +129,9 @@ El siguiente enlace lleva a un archivo de google sheets con la definición de la
 https://docs.google.com/spreadsheets/d/1-eUCWY-VkGH3vUq4jT_UxRgGNy-ChXFRJeHKCe7AbH0/edit?usp=sharing
 
 
+![Esquema de base de datos](imagenes/Schema.jpg)
+
+
 # DIAGRAMA ENTIDAD RELACION
 
 La imagen que sigue muestra el diagrama, pero también se puede descargar un pdf de la lista de archivos y carpetas de este repo.
