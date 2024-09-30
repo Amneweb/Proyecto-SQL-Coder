@@ -112,11 +112,11 @@ Para entender a grandes rasgos la idea del funcionamiento de la app, a continuac
 3. El cliente envía la orden de pedidos (Procedure "sp_generar_pedidos")
 4. El cliente ve su orden completa, con precios unitarios y el total (Vistas "pedidos_detallados" y "pedido_cliente")
 5. El cliente (también lo puede hacer un administrador) modifica o borra su pedido completo (Procesos "sp_modificar_pedido" o "sp_borrar_pedido")
-6. Los encargados de depósito modifican los estados de un pedido (dependiendo de si hay stock o no, cuando ya están cargados en los vehículos, etc - no programé todos los procesos de cambios de estado, sólo el de aprobado)
-7. Los administradores pasan el estado de cada pedido a Aprobado
+6. Los encargados de depósito modifican los estados de un pedido (dependiendo de si hay stock o no, cuando ya están cargados en los vehículos, etc - no programé todos los procesos de cambios de estado, sólo el de aprobado) (Proceso "sp_modificar_estado")
+7. Los administradores pasan el estado de cada pedido a Aprobado (Proceso "sp_modificar_estado")
 8. Los administradores generan los repartos para cada zona, de manera que el sistema asigna un vehiculo a cada una (Proceso "sp_generar_reparto")
 9. Los choferes ingresan el kilometraje al comienzo de cada reparto (Proceso "sp_cargar_km")
-10. Una vez que el cliente recibe el pedido, los choferes pasan el estado del pedido a Entregado (proceso no programado)
+10. Una vez que el cliente recibe el pedido, los choferes pasan el estado del pedido a Entregado (Proceso "sp_modificar_estado")
 11. Los choferes ingresan el kilometraje al final de cada reparto (Proceso "sp_cargar_km")
 
 
